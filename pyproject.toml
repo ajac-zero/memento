@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "memento"
+name = "memento-llm"
 version = "0.1.0"
 description = "Simple LLM Memory"
 authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
+packages = [{ include = "memento" }]
 readme = "README.md"
 
 [tool.poetry.dependencies]

@@ -8,7 +8,7 @@ Memento automatically manages your conversations with LLMs with just 3 lines of 
 
 ## Getting Started
 
-To install Memento, run `pip install memento` in your terminal.
+To install Memento, run `pip install memento-llm` in your terminal.
 
 With Memento, you no longer have to worry about setting up message storage logic in your application, here is how I can be integrated into your code:
 

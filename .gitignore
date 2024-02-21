@@ -1,0 +1,6 @@
+**__pycache__
+.ruff_cache
+pyrightconfig.json
+*.db
+tests/
+dist/

@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "memento"
+version = "0.1.0"
+description = "Simple LLM Memory"
+authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+alembic = "^1.13.1"
+sqlalchemy = "^2.0.25"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

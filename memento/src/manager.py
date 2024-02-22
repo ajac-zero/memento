@@ -72,7 +72,7 @@ class Manager(Repository):
         if user_instance is not None and assistant_instance is not None:
             return [
                 conversation.id
-                for conversation in self.read( #type: ignore
+                for conversation in self.read(  # type: ignore
                     Conversation,
                     all=True,
                     user=user_instance.id,

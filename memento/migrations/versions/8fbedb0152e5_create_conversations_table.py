@@ -13,8 +13,8 @@ from sqlalchemy.schema import Column
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8fbedb0152e5'
-down_revision: Union[str, None] = '0f36f68ad565'
+revision: str = "8fbedb0152e5"
+down_revision: Union[str, None] = "0f36f68ad565"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -25,8 +25,11 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.Text),
         sa.Column("user", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("assistant", sa.Integer, sa.ForeignKey("assistants.id"), nullable=False),
+        sa.Column(
+            "assistant", sa.Integer, sa.ForeignKey("assistants.id"), nullable=False
+        ),
     )
+
 
 def downgrade() -> None:
     op.drop_table("conversations")

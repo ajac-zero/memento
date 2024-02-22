@@ -1,22 +1,16 @@
-from typing import Optional, List, Union
 from memento.src.migrator import Migrator
 from sqlalchemy.orm import sessionmaker
-from memento.src.manager import Manager
 from sqlalchemy import create_engine
 from dataclasses import dataclass
-from alembic.config import Config
-from alembic import command
-import os
+from typing import List
 
-DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-ALEMBIC_INI_PATH = os.path.join(DIR_PATH, '..', 'alembic.ini')
-MIGRATION_DIR_PATH = os.path.join(DIR_PATH, '..', 'migrations')
 
 @dataclass
 class Settings:
     user: str = "user"
     assistant: str = "assistant"
     conversation: int = 0
+
 
 class BaseMemory(Migrator):
     def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):
@@ -40,17 +34,18 @@ class BaseMemory(Migrator):
         for attribute, value in kwargs.items():
             setattr(self.settings, attribute, value)
 
-    def message(self, role: str, content: str) -> Optional[int]:
+    def message(self, role: str, content: str) -> int:
         return self.commit_message(self.settings.conversation, role, content)
 
-    def history(self) -> Optional[List[dict]]:
+    def history(self) -> List[dict]:
         return self.pull_messages(self.settings.conversation)
 
-    def __call__(self, func, assistant: Optional[str] = None):
+    def __call__(self, func):
         def wrapper(prompt: str, *args, **kwargs):
             self.message("user", prompt)
             messages = self.history()
             response = func(messages=messages, *args, **kwargs)
             self.message("assistant", response)
             return response
+
         return wrapper

@@ -7,7 +7,7 @@ Base = declarative_base()
 
 
 class User(Base):
-    __tablename__ = "Users"
+    __tablename__ = "users"
 
     id = column(Integer, primary_key=True)
     name = column(String(30), nullable=False, unique=True)
@@ -18,7 +18,7 @@ class User(Base):
 
 
 class Assistant(Base):
-    __tablename__ = "Assistants"
+    __tablename__ = "assistants"
 
     id = column(Integer, primary_key=True)
     name = column(String(20), nullable=False, unique=True)
@@ -32,12 +32,12 @@ class Assistant(Base):
 
 
 class Conversation(Base):
-    __tablename__ = "Conversations"
+    __tablename__ = "conversations"
 
     id = column(Integer, primary_key=True)
     name = column(Text)
-    user = column(ForeignKey("Users.id"), nullable=False)
-    assistant = column(ForeignKey("Assistants.id"), nullable=False)
+    user = column(ForeignKey("users.id"), nullable=False)
+    assistant = column(ForeignKey("assistants.id"), nullable=False)
     messages = relationship("Message", cascade="all,delete", lazy="joined")
 
     def __repr__(self) -> str:
@@ -45,10 +45,10 @@ class Conversation(Base):
 
 
 class Message(Base):
-    __tablename__ = "Messages"
+    __tablename__ = "messages"
 
     id = column(Integer, primary_key=True)
-    conversation = column(ForeignKey("Conversations.id"), nullable=False)
+    conversation = column(ForeignKey("conversations.id"), nullable=False)
 
     role = column(String(9), nullable=False)
     content = column(Text, nullable=False)

@@ -21,12 +21,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table(
-        "Conversations",
+        "conversations",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.Text),
-        sa.Column("user", sa.Integer, sa.ForeignKey("Users.id"), nullable=False),
-        sa.Column("assistant", sa.Integer, sa.ForeignKey("Assistants.id"), nullable=False),
+        sa.Column("user", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("assistant", sa.Integer, sa.ForeignKey("assistants.id"), nullable=False),
     )
 
 def downgrade() -> None:
-    op.drop_table("Conversations")
+    op.drop_table("conversations")

@@ -1,4 +1,5 @@
 from typing import Optional, List, Union
+from memento.src.migrator import Migrator
 from sqlalchemy.orm import sessionmaker
 from memento.src.manager import Manager
 from sqlalchemy import create_engine
@@ -17,17 +18,11 @@ class Settings:
     assistant: str = "assistant"
     conversation: int = 0
 
-class BaseMemory(Manager):
-    def __init__(self, connection: str, **kwargs):
+class BaseMemory(Migrator):
+    def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):
         super().__init__(sessionmaker(bind=create_engine(connection)))
         self.update_database(connection)
         self.settings = self.set_settings(**kwargs)
-
-    def update_database(self, connection: str) -> None:
-        alembic_cfg = Config(ALEMBIC_INI_PATH)
-        alembic_cfg.set_main_option("script_location", MIGRATION_DIR_PATH)
-        alembic_cfg.set_main_option("sqlalchemy.url", connection)
-        command.upgrade(alembic_cfg, "head")
 
     def set_settings(self, **kwargs) -> Settings:
         settings = Settings(**kwargs)

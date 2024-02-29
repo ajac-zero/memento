@@ -1,5 +1,5 @@
 from sqlalchemy import Engine
-from memento.schemas.models import Base
+from memento.sql.schemas.models import Base
 
 
 def migrate(engine: Engine):

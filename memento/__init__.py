@@ -1,1 +1,1 @@
-from memento.sql.orm.sync.basememory import BaseMemory as Memento
+from memento.sql.src.sync.basememory import BaseMemory as Memento

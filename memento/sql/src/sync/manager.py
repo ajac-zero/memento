@@ -1,5 +1,5 @@
 from memento.sql.schemas.models import Assistant, Conversation, Message, User
-from memento.sql.orm.sync.repository import Repository
+from memento.sql.src.sync.repository import Repository
 from sqlalchemy.orm import sessionmaker
 from typing import Optional, List
 import json

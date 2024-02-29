@@ -1,4 +1,4 @@
-from memento.sql.orm.sync.migrator import Migrator
+from memento.sql.src.sync.migrator import Migrator
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from dataclasses import dataclass

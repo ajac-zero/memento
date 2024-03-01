@@ -13,7 +13,7 @@ class Settings:
 
 
 class BaseMemory(Migrator):
-    def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):
+    def __init__(self, connection: str, **kwargs):
         super().__init__(sessionmaker(bind=create_engine(connection)))
         self.update_database(connection)
         self.settings = self.set_settings(**kwargs)

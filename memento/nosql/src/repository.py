@@ -6,7 +6,7 @@ from typing import Union
 
 class Repository:
     @classmethod
-    async def nosql(cls, connection: str):
+    async def init(cls, connection: str):
         self = cls()
         mongo = AsyncIOMotorClient(connection)
         database = mongo.memento

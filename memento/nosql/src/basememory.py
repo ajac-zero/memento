@@ -30,7 +30,6 @@ class BaseMemory(Manager):
     def __call__(self, _func=None, **sttargs):
         def decorator(func, local: bool = False):
             async def wrapper(prompt: str, *args, **kwargs):
-                print(local)
                 settings = await self.set_settings(local, **sttargs)
                 await self.message("user", prompt, settings)
                 messages = await self.history(settings)

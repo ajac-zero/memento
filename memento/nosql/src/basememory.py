@@ -7,7 +7,9 @@ class BaseMemory(Manager):
     async def set_settings(self, **kwargs):
         settings = Settings(**kwargs)
         if await self.get_conversation(settings.conversation) == None:
-            settings.conversation = await self.register_conversation(user=settings.user,assistant=settings.assistant)
+            settings.conversation = await self.register_conversation(
+                user=settings.user, assistant=settings.assistant
+            )
         return settings
 
     async def message(self, role: str, content: str, settings: Settings) -> None:
@@ -23,4 +25,5 @@ class BaseMemory(Manager):
             messages = await self.history(settings)
             response = func(messages, **kwargs)
             await self.message("assistant", response, settings)
+
         return wrapper

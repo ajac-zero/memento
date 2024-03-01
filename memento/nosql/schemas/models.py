@@ -1,18 +1,23 @@
-from typing import List, Annotated
-from beanie import Document, Indexed, Link
+from memento.nosql.schemas.settings import idmaker
 from pydantic import BaseModel, Field
-from uuid import uuid4
+from beanie import Document, Indexed
+from typing import List, Annotated
 
-def idmaker():
-    return str(uuid4())
-
-class Message(Document):
-    id: str = Field(default_factory=idmaker) #type: ignore
+class MessageContent(BaseModel):
     role: str
     content: str
 
+class Message(Document):
+    idx: str = Field(default_factory=idmaker)  # type: ignore
+    content: MessageContent
+
 class Conversation(Document):
-    id: str = Field(default_factory=idmaker) #type: ignore
+    idx: str = Field(default_factory=idmaker)  # type: ignore
     user: Annotated[str, Indexed()]
     assistant: str
     messages: List[Message]
+
+class Assistant(Document):
+    idx: str = Field(default_factory=idmaker)  # type: ignore
+    name: Annotated[str, Indexed()]
+    system: str

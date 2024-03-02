@@ -1,5 +1,5 @@
 from memento.nosql.src.repository import Repository
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from memento.nosql.schemas.models import (
     Assistant,
     Conversation,
@@ -35,17 +35,17 @@ class Manager(Repository):
             return assistant.idx
 
     async def commit_message(
-        self, conversation_idx: str, role: str, content: str
+        self, conversation_idx: str, role: str, content: str, augment: Optional[str]
     ) -> str:
         conversation: Conversation = await self.read(Conversation, idx=conversation_idx)  # type: ignore
-        message = Message(content=MessageContent(role=role, content=content))
+        message = Message(content=MessageContent(role=role, content=content), augment=augment)
         conversation.messages.append(message)
         await conversation.save()  # type: ignore
         return message.idx
 
-    async def pull_messages(self, conversation_idx: str) -> List[Dict[str, str]]:
+    async def pull_messages(self, conversation_idx: str) -> Tuple[List[Dict[str, str]], Optional[str]]:
         conversation: Conversation = await self.read(Conversation, idx=conversation_idx)  # type: ignore
-        return [message.content.dict() for message in conversation.messages]
+        return [message.content.dict() for message in conversation.messages], conversation.messages[-1].augment
 
     async def delete_assistant(self, name: str):
         assistant: Assistant = await self.read(Assistant, name=name)  # type: ignore

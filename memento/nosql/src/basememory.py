@@ -1,11 +1,13 @@
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
 from typing import List, Dict, Optional
+from types import FunctionType
 
 
 class BaseMemory(Manager):
     def __init__(self) -> None:
         self.conversation: Optional[str] = None
+        self.template_factory: Optional[FunctionType] = None
 
     async def set_settings(self, idx: Optional[str], user: str, assistant: str, **kwargs):
         settings = Settings(conversation=idx, user=user, assistant=assistant)
@@ -20,26 +22,33 @@ class BaseMemory(Manager):
                 raise ValueError("Conversation does not exist.")
         return settings
 
-    async def message(self, role: str, content: str, settings: Settings) -> None:
-        await self.commit_message(settings.conversation, role, content) #type: ignore
+    async def message(self, role: str, content: str, settings: Settings, augment: Optional[str] = None) -> None:
+        await self.commit_message(settings.conversation, role, content, augment) #type: ignore
 
     async def history(self, settings: Settings) -> List[Dict[str, str]]:
-        return await self.pull_messages(settings.conversation) #type: ignore
+        messages, augment = await self.pull_messages(settings.conversation) #type: ignore
+        if augment != None:
+            if self.template_factory != None:
+                messages[-1]["content"] = self.template_factory(augment, messages)
+            else:
+                messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+        return messages
 
     def decorator(self, function):
-        async def wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+        async def wrapper(prompt: str, augment: Optional[str] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
             settings = await self.set_settings(idx, user, assistant)
-            await self.message("user", prompt, settings)
+            await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             response = await function(messages=messages, *args, **kwargs)
-            await self.message("assistant", response, settings)
-            return response
+            content = response.choices[0].message.content
+            await self.message("assistant", content, settings)
+            return content
         return wrapper
 
     def stream_decorator(self, function):
-        async def stream_wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+        async def stream_wrapper(prompt: str, augment: Optional[str] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
             settings = await self.set_settings(idx, user, assistant)
-            await self.message("user", prompt, settings)
+            await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             buffer = ""
             response = await function(messages=messages, *args, **kwargs)
@@ -52,7 +61,9 @@ class BaseMemory(Manager):
             await self.message("assistant", buffer, settings)
         return stream_wrapper
 
-    def __call__(self, func = None, *, stream: bool = False):
+    def __call__(self, func = None, *, stream: bool = False, template_factory: Optional[FunctionType] = None):
+        if template_factory != None:
+            self.template_factory = template_factory
         if func != None:
             return self.decorator(func)
         else:

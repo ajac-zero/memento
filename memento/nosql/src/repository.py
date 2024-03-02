@@ -22,4 +22,4 @@ class Repository:
         **kwargs,
     ):
         results = await model.find(kwargs).to_list()
-        return results if all else results[0] if len(results) > 0 else None
+        return results if all else results[-1] if len(results) > 0 else None

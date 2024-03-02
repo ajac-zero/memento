@@ -26,36 +26,34 @@ class BaseMemory(Manager):
     async def history(self, settings: Settings) -> List[Dict[str, str]]:
         return await self.pull_messages(settings.conversation) #type: ignore
 
-    def decorator(self, function, stream: bool = False):
-        if not stream:
-            async def wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
-                settings = await self.set_settings(idx, user, assistant)
-                await self.message("user", prompt, settings)
-                messages = await self.history(settings)
-                response = await function(messages=messages, *args, **kwargs)
-                await self.message("assistant", response, settings)
-                return response
-            return wrapper
-        else:
-            async def stream_wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
-                settings = await self.set_settings(idx, user, assistant)
-                await self.message("user", prompt, settings)
-                messages = await self.history(settings)
-                buffer = ""
-                response = await function(messages=messages, *args, **kwargs)
-                async for chunk in response:
-                    if len(chunk.choices) > 0:
-                        content = chunk.choices[0].delta.content
-                        if content:
-                            buffer += content
-                            yield content
-                await self.message("assistant", buffer, settings)
-            return stream_wrapper
+    def decorator(self, function):
+        async def wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+            settings = await self.set_settings(idx, user, assistant)
+            await self.message("user", prompt, settings)
+            messages = await self.history(settings)
+            response = await function(messages=messages, *args, **kwargs)
+            await self.message("assistant", response, settings)
+            return response
+        return wrapper
+
+    def stream_decorator(self, function):
+        async def stream_wrapper(prompt: str, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+            settings = await self.set_settings(idx, user, assistant)
+            await self.message("user", prompt, settings)
+            messages = await self.history(settings)
+            buffer = ""
+            response = await function(messages=messages, *args, **kwargs)
+            async for chunk in response:
+                if len(chunk.choices) > 0:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        buffer += content
+                        yield content
+            await self.message("assistant", buffer, settings)
+        return stream_wrapper
 
     def __call__(self, func = None, *, stream: bool = False):
         if func != None:
-            return self.decorator(func, stream)
+            return self.decorator(func)
         else:
-            def wrapped(func):
-                return self.decorator(func, stream)
-            return wrapped
+            return self.stream_decorator if stream else self.decorator

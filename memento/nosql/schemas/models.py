@@ -1,5 +1,5 @@
 from memento.nosql.schemas.settings import idmaker
-from typing import List, Annotated, Optional
+from typing import Any, List, Annotated, Optional
 from pydantic import BaseModel, Field
 from beanie import Document, Indexed
 
@@ -11,7 +11,7 @@ class MessageContent(BaseModel):
 
 class Message(Document):
     idx: str = Field(default_factory=idmaker)  # type: ignore
-    augment: Optional[str] = None
+    augment: Optional[Any] = None
     content: MessageContent
 
 

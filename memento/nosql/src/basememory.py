@@ -1,6 +1,6 @@
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from types import FunctionType
 
 
@@ -29,13 +29,16 @@ class BaseMemory(Manager):
         messages, augment = await self.pull_messages(settings.conversation) #type: ignore
         if augment != None:
             if self.template_factory != None:
-                messages[-1]["content"] = self.template_factory(augment, messages)
+                messages[-1]["content"] = self.template_factory(augment, messages[-1]["content"])
             else:
-                messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+                try:
+                    messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+                except Exception:
+                    raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory if another type is needed.")
         return messages
 
     def decorator(self, function):
-        async def wrapper(prompt: str, augment: Optional[str] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+        async def wrapper(prompt: str, augment: Optional[Any] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
@@ -46,7 +49,7 @@ class BaseMemory(Manager):
         return wrapper
 
     def stream_decorator(self, function):
-        async def stream_wrapper(prompt: str, augment: Optional[str] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
+        async def stream_wrapper(prompt: str, augment: Optional[Any] = None, idx: Optional[str] = None, user: str = "user", assistant: str = "assistant", *args, **kwargs):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)

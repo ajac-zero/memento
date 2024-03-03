@@ -6,6 +6,7 @@ from uuid import uuid4
 def idmaker():
     return str(uuid4())
 
+
 @dataclass
 class Settings:
     conversation: Optional[str] = None

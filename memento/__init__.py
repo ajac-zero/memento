@@ -1,6 +1,6 @@
 from memento.sql import SQLMemory
 from memento.nosql import NoSQLMemory
-from openai import OpenAI
+from openai import AsyncAzureOpenAI
 
 
 class Memento(SQLMemory):
@@ -11,10 +11,10 @@ class Memento(SQLMemory):
     def nosql(connection: str) -> NoSQLMemory:
         return NoSQLMemory.create(connection)
 
-    def memory(client: OpenAI, connection, nosql = False, stream = False, template_factory = None):
-        if nosql is True:
-            memento: NoSQLMemory = Memento.nosql(connection)
-            client.chat.completions.create = memento(func=client.chat.completions.create, stream=stream, template_factory=template_factory)
-            return client
-        else:
-            raise NotImplementedError("SQL not yet implemented.")
+def memory(client: AsyncAzureOpenAI, connection, nosql = False, stream = False, template_factory = None):
+    if nosql is True:
+        memento: NoSQLMemory = Memento.nosql(connection)
+        client.chat.completions.create = memento(func=client.chat.completions.create, stream=stream, template_factory=template_factory)
+        return client
+    else:
+        raise NotImplementedError("SQL not yet implemented.")

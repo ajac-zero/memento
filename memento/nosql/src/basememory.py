@@ -107,7 +107,7 @@ class AsyncNoSQLMemory(Manager):
     ) :
         if template_factory != None:
             self.template_factory = template_factory
-        if func != None:
-            return self.decorator(func)
+        if func is not None:
+            return self.stream_decorator(func) if stream else self.decorator(func)
         else:
             return self.stream_decorator if stream else self.decorator

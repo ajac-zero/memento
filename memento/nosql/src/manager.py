@@ -45,7 +45,7 @@ class Manager(Repository):
                 content=MessageContent(role=role, content=content), augment=augment
             )
             conversation.messages.append(message)
-            await conversation.save(Conversation)
+            await conversation.save() #type: ignore
             return message.idx
         else:
             raise ValueError("Could not save message as conversation does not exist.")
@@ -60,14 +60,14 @@ class Manager(Repository):
     async def delete_assistant(self, name: str):
         assistant = await self.read(Assistant, name=name)
         if isinstance(assistant, Assistant):
-            await assistant.delete(Assistant)
+            await assistant.delete() #type: ignore
         else:
             raise ValueError("Could not delete assistant as it does not exist.")
 
     async def delete_conversation(self, idx: str):
         conversation = await self.read(Conversation, idx=idx)
         if isinstance(conversation, Conversation):
-            await conversation.delete(Conversation)
+            await conversation.delete() #type: ignore
         else:
             raise ValueError("Could not delete conversation as it does not exist.")
 

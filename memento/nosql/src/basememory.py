@@ -9,9 +9,7 @@ class AsyncNoSQLMemory(Manager):
         self.conversation: str | None = None
         self.template_factory: Callable | None = None
 
-    async def set_settings(
-        self, idx: str | None, user: str, assistant: str, **kwargs
-    ):
+    async def set_settings(self, idx: str | None, user: str, assistant: str, **kwargs):
         settings = Settings(conversation=idx, user=user, assistant=assistant)
         if settings.conversation == None:
             if self.conversation == None:
@@ -44,7 +42,9 @@ class AsyncNoSQLMemory(Manager):
                     )
                 else:
                     try:
-                        messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+                        messages[-1]["content"] = (
+                            augment + "\n" + messages[-1]["content"]
+                        )
                     except Exception:
                         raise ValueError(
                             f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed."
@@ -104,7 +104,7 @@ class AsyncNoSQLMemory(Manager):
         *,
         stream: bool = False,
         template_factory: Callable | None = None,
-    ) :
+    ):
         if template_factory != None:
             self.template_factory = template_factory
         if func is not None:

@@ -45,29 +45,33 @@ class Manager(Repository):
                 content=MessageContent(role=role, content=content), augment=augment
             )
             conversation.messages.append(message)
-            await conversation.save() #type: ignore
+            await conversation.save()  # type: ignore
             return message.idx
         else:
             raise ValueError("Could not save message as conversation does not exist.")
 
-    async def pull_messages(self, conversation_idx: str) -> tuple[list[dict[str, str]], str | None]:
+    async def pull_messages(
+        self, conversation_idx: str
+    ) -> tuple[list[dict[str, str]], str | None]:
         conversation = await self.read(Conversation, idx=conversation_idx)
         if isinstance(conversation, Conversation):
-            return [message.content.dict() for message in conversation.messages], conversation.messages[-1].augment
+            return [
+                message.content.dict() for message in conversation.messages
+            ], conversation.messages[-1].augment
         else:
             raise ValueError("Could not pull messages as conversation does not exist.")
 
     async def delete_assistant(self, name: str):
         assistant = await self.read(Assistant, name=name)
         if isinstance(assistant, Assistant):
-            await assistant.delete() #type: ignore
+            await assistant.delete()  # type: ignore
         else:
             raise ValueError("Could not delete assistant as it does not exist.")
 
     async def delete_conversation(self, idx: str):
         conversation = await self.read(Conversation, idx=idx)
         if isinstance(conversation, Conversation):
-            await conversation.delete() #type: ignore
+            await conversation.delete()  # type: ignore
         else:
             raise ValueError("Could not delete conversation as it does not exist.")
 

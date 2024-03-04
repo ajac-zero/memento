@@ -15,18 +15,26 @@ class Repository:
         return cls(client)
 
     async def on(self) -> None:
-        await init_beanie(database=self.database, document_models=[Assistant, Conversation, Message])
+        await init_beanie(
+            database=self.database, document_models=[Assistant, Conversation, Message]
+        )
 
     @overload
-    async def read(self, model: type[Assistant], all: bool = False, **kwargs) -> Assistant | None:
+    async def read(
+        self, model: type[Assistant], all: bool = False, **kwargs
+    ) -> Assistant | None:
         ...
 
     @overload
-    async def read(self, model: type[Conversation], all: bool = False, **kwargs) -> Conversation | None:
+    async def read(
+        self, model: type[Conversation], all: bool = False, **kwargs
+    ) -> Conversation | None:
         ...
 
     @overload
-    async def read(self, model: type[Message], all: bool = False, **kwargs) -> Message | None:
+    async def read(
+        self, model: type[Message], all: bool = False, **kwargs
+    ) -> Message | None:
         ...
 
     async def read(

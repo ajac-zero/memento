@@ -8,6 +8,9 @@ from memento.nosql.schemas.models import (
 
 
 class Manager(Repository):
+    def __init__(self, client) -> None:
+        super().__init__(client)
+
     async def register_conversation(self, user: str, assistant) -> str:
         existing_assistant = await self.read(Assistant, name=assistant)
         if existing_assistant:

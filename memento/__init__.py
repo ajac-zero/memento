@@ -8,13 +8,13 @@ class Memento(SQLMemory):
         super().__init__(connection, **kwargs)
 
     @staticmethod
-    async def nosql(connection: str) -> NoSQLMemory:
-        return await NoSQLMemory.init(connection)
+    def nosql(connection: str) -> NoSQLMemory:
+        return NoSQLMemory.create(connection)
 
-def memory(client: OpenAI, connection, nosql = False, stream = False, template_factory = None):
-    if nosql is True:
-        memento: NoSQLMemory = Memento.nosql(connection)
-        client.chat.completions.create = memento(func=client.chat.completions.create, stream=stream, template_factory=template_factory)
-        return client
-    else:
-        raise NotImplementedError("SQL not yet implemented.")
+    def memory(client: OpenAI, connection, nosql = False, stream = False, template_factory = None):
+        if nosql is True:
+            memento: NoSQLMemory = Memento.nosql(connection)
+            client.chat.completions.create = memento(func=client.chat.completions.create, stream=stream, template_factory=template_factory)
+            return client
+        else:
+            raise NotImplementedError("SQL not yet implemented.")

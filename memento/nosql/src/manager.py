@@ -1,5 +1,4 @@
 from memento.nosql.src.repository import Repository
-from typing import Dict, List, Optional, Tuple
 from memento.nosql.schemas.models import (
     Assistant,
     Conversation,
@@ -10,7 +9,7 @@ from memento.nosql.schemas.models import (
 
 class Manager(Repository):
     async def register_conversation(self, user: str, assistant) -> str:
-        existing_assistant: Assistant = await self.read(Assistant, name=assistant)  # type: ignore
+        existing_assistant = await self.read(Assistant, name=assistant)
         if existing_assistant:
             system_message = Message(
                 content=MessageContent(role="system", content=existing_assistant.system)
@@ -26,7 +25,7 @@ class Manager(Repository):
             )
 
     async def register_assistant(self, name: str, system: str) -> str:
-        existing_assistant: Assistant = await self.read(Assistant, name=name)  # type: ignore
+        existing_assistant = await self.read(Assistant, name=name)
         if existing_assistant:
             raise ValueError("Assistant already exists")
         else:
@@ -35,32 +34,40 @@ class Manager(Repository):
             return assistant.idx
 
     async def commit_message(
-        self, conversation_idx: str, role: str, content: str, augment: Optional[str]
+        self, conversation_idx: str, role: str, content: str, augment: str | None
     ) -> str:
-        conversation: Conversation = await self.read(Conversation, idx=conversation_idx)  # type: ignore
-        message = Message(
-            content=MessageContent(role=role, content=content), augment=augment
-        )
-        conversation.messages.append(message)
-        await conversation.save()  # type: ignore
-        return message.idx
+        conversation = await self.read(Conversation, idx=conversation_idx)
+        if isinstance(conversation, Conversation):
+            message = Message(
+                content=MessageContent(role=role, content=content), augment=augment
+            )
+            conversation.messages.append(message)
+            await conversation.save(Conversation)
+            return message.idx
+        else:
+            raise ValueError("Could not save message as conversation does not exist.")
 
-    async def pull_messages(
-        self, conversation_idx: str
-    ) -> Tuple[List[Dict[str, str]], Optional[str]]:
-        conversation: Conversation = await self.read(Conversation, idx=conversation_idx)  # type: ignore
-        return [
-            message.content.dict() for message in conversation.messages
-        ], conversation.messages[-1].augment
+    async def pull_messages(self, conversation_idx: str) -> tuple[list[dict[str, str]], str | None]:
+        conversation = await self.read(Conversation, idx=conversation_idx)
+        if isinstance(conversation, Conversation):
+            return [message.content.dict() for message in conversation.messages], conversation.messages[-1].augment
+        else:
+            raise ValueError("Could not pull messages as conversation does not exist.")
 
     async def delete_assistant(self, name: str):
-        assistant: Assistant = await self.read(Assistant, name=name)  # type: ignore
-        await assistant.delete()  # type: ignore
+        assistant = await self.read(Assistant, name=name)
+        if isinstance(assistant, Assistant):
+            await assistant.delete(Assistant)
+        else:
+            raise ValueError("Could not delete assistant as it does not exist.")
 
     async def delete_conversation(self, idx: str):
-        conversation: Conversation = await self.read(Conversation, idx=idx)  # type: ignore
-        await conversation.delete()  # type: ignore
+        conversation = await self.read(Conversation, idx=idx)
+        if isinstance(conversation, Conversation):
+            await conversation.delete(Conversation)
+        else:
+            raise ValueError("Could not delete conversation as it does not exist.")
 
-    async def get_conversation(self, idx: str) -> Optional[str]:
-        conversation: Conversation = await self.read(Conversation, idx=idx)  # type: ignore
+    async def get_conversation(self, idx: str) -> str | None:
+        conversation = await self.read(Conversation, idx=idx)
         return conversation.idx if conversation else None

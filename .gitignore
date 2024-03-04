@@ -4,3 +4,4 @@ pyrightconfig.json
 *.db
 tests/
 dist/
+venv/

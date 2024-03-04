@@ -1,16 +1,16 @@
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Any, List, Dict, Optional
-from types import FunctionType
+from typing import Callable, Any
+from functools import wraps
 
 
-class BaseMemory(Manager):
+class AsyncNoSQLMemory(Manager):
     def __init__(self) -> None:
-        self.conversation: Optional[str] = None
-        self.template_factory: Optional[FunctionType] = None
+        self.conversation: str | None = None
+        self.template_factory: Callable | None = None
 
     async def set_settings(
-        self, idx: Optional[str], user: str, assistant: str, **kwargs
+        self, idx: str | None, user: str, assistant: str, **kwargs
     ):
         settings = Settings(conversation=idx, user=user, assistant=assistant)
         if settings.conversation == None:
@@ -27,31 +27,38 @@ class BaseMemory(Manager):
         return settings
 
     async def message(
-        self, role: str, content: str, settings: Settings, augment: Optional[str] = None
+        self, role: str, content: str, settings: Settings, augment: str | None = None
     ) -> None:
-        await self.commit_message(settings.conversation, role, content, augment)  # type: ignore
+        if settings.conversation:
+            await self.commit_message(settings.conversation, role, content, augment)
+        else:
+            raise ValueError("Could not save message as conversation does not exist.")
 
-    async def history(self, settings: Settings) -> List[Dict[str, str]]:
-        messages, augment = await self.pull_messages(settings.conversation)  # type: ignore
-        if augment != None:
-            if self.template_factory != None:
-                messages[-1]["content"] = self.template_factory(
-                    augment, messages[-1]["content"]
-                )
-            else:
-                try:
-                    messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
-                except Exception:
-                    raise ValueError(
-                        f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed."
+    async def history(self, settings: Settings) -> list[dict[str, str]]:
+        if settings.conversation:
+            messages, augment = await self.pull_messages(settings.conversation)
+            if augment != None:
+                if self.template_factory != None:
+                    messages[-1]["content"] = self.template_factory(
+                        augment, messages[-1]["content"]
                     )
-        return messages
+                else:
+                    try:
+                        messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+                    except Exception:
+                        raise ValueError(
+                            f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed."
+                        )
+            return messages
+        else:
+            raise ValueError("Could not get history as conversation does not exist.")
 
-    def decorator(self, function):
+    def decorator(self, function: Callable) -> Callable:
+        @wraps(function)
         async def wrapper(
             prompt: str,
-            augment: Optional[Any] = None,
-            idx: Optional[str] = None,
+            augment: Any | None = None,
+            idx: str | None = None,
             user: str = "user",
             assistant: str = "assistant",
             *args,
@@ -67,11 +74,12 @@ class BaseMemory(Manager):
 
         return wrapper
 
-    def stream_decorator(self, function):
+    def stream_decorator(self, function: Callable) -> Callable:
+        @wraps(function)
         async def stream_wrapper(
             prompt: str,
-            augment: Optional[Any] = None,
-            idx: Optional[str] = None,
+            augment: Any | None = None,
+            idx: str | None = None,
             user: str = "user",
             assistant: str = "assistant",
             *args,
@@ -97,8 +105,8 @@ class BaseMemory(Manager):
         func=None,
         *,
         stream: bool = False,
-        template_factory: Optional[FunctionType] = None,
-    ):
+        template_factory: Callable | None = None,
+    ) -> Callable:
         if template_factory != None:
             self.template_factory = template_factory
         if func != None:

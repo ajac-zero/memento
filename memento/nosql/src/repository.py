@@ -1,7 +1,7 @@
 from memento.nosql.schemas.models import Assistant, Conversation, Message
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from typing import Union
+from typing import overload
 
 
 class Repository:
@@ -15,9 +15,21 @@ class Repository:
         )
         return self
 
+    @overload
+    async def read(self, model: type[Assistant], all: bool = False, **kwargs) -> Assistant | None:
+        ...
+
+    @overload
+    async def read(self, model: type[Conversation], all: bool = False, **kwargs) -> Conversation | None:
+        ...
+
+    @overload
+    async def read(self, model: type[Message], all: bool = False, **kwargs) -> Message | None:
+        ...
+
     async def read(
         self,
-        model: Union[Assistant, Conversation, Message],
+        model: type[Assistant] | type[Conversation] | type[Message],
         all: bool = False,
         **kwargs,
     ):

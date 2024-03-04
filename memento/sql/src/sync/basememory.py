@@ -12,7 +12,7 @@ class Settings:
     conversation: int = 0
 
 
-class BaseMemory(Migrator):
+class SQLMemory(Migrator):
     def __init__(self, connection: str, **kwargs):
         super().__init__(sessionmaker(bind=create_engine(connection)))
         self.update_database(connection)

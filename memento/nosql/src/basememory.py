@@ -1,6 +1,7 @@
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Callable, Any
+from typing import Any, Callable, AsyncGenerator
 
 
 class AsyncNoSQLMemory(Manager):
@@ -9,9 +10,7 @@ class AsyncNoSQLMemory(Manager):
         self.conversation: str | None = None
         self.template_factory: Callable | None = None
 
-    async def set_settings(
-        self, idx: str | None, user: str, assistant: str, **kwargs
-    ):
+    async def set_settings(self, idx: str | None, user: str, assistant: str, **kwargs):
         settings = Settings(conversation=idx, user=user, assistant=assistant)
         if settings.conversation == None:
             if self.conversation == None:
@@ -44,7 +43,9 @@ class AsyncNoSQLMemory(Manager):
                     )
                 else:
                     try:
-                        messages[-1]["content"] = augment + "\n" + messages[-1]["content"]
+                        messages[-1]["content"] = (
+                            augment + "\n" + messages[-1]["content"]
+                        )
                     except Exception:
                         raise ValueError(
                             f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed."
@@ -62,14 +63,14 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> ChatCompletion:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             response = await function(messages=messages, *args, **kwargs)
             content = response.choices[0].message.content
             await self.message("assistant", content, settings)
-            return content
+            return response
 
         return wrapper
 
@@ -82,18 +83,19 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> AsyncGenerator[ChatCompletionChunk, None]:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             buffer = ""
             response = await function(messages=messages, *args, **kwargs)
             async for chunk in response:
-                if len(chunk.choices) > 0:
-                    content = chunk.choices[0].delta.content
+                choices = chunk.choices
+                if len(choices) > 0:
+                    content = choices[0].delta.content
                     if content:
                         buffer += content
-                        yield content
+                yield chunk
             await self.message("assistant", buffer, settings)
 
         return stream_wrapper
@@ -104,10 +106,10 @@ class AsyncNoSQLMemory(Manager):
         *,
         stream: bool = False,
         template_factory: Callable | None = None,
-    ) :
+    ):
         if template_factory != None:
             self.template_factory = template_factory
-        if func != None:
-            return self.decorator(func)
+        if func is not None:
+            return self.stream_decorator(func) if stream else self.decorator(func)
         else:
             return self.stream_decorator if stream else self.decorator

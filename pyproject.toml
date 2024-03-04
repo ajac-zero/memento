@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "memento-llm"
-version = "0.1.7.5"
+version = "0.1.8"
 description = "Simple LLM Memory"
 authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
 packages = [{ include = "memento" }]
@@ -13,6 +13,7 @@ sqlalchemy = "^2.0.25"
 psycopg2-binary = "^2.9.9"
 mysql-connector-python = "^8.3.0"
 beanie = "^1.25.0"
+openai = "^1.13.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.2.2"

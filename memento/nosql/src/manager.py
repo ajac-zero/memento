@@ -50,10 +50,14 @@ class Manager(Repository):
         else:
             raise ValueError("Could not save message as conversation does not exist.")
 
-    async def pull_messages(self, conversation_idx: str) -> tuple[list[dict[str, str]], str | None]:
+    async def pull_messages(
+        self, conversation_idx: str
+    ) -> tuple[list[dict[str, str]], str | None]:
         conversation = await self.read(Conversation, idx=conversation_idx)
         if isinstance(conversation, Conversation):
-            return [message.content.dict() for message in conversation.messages], conversation.messages[-1].augment
+            return [
+                message.content.dict() for message in conversation.messages
+            ], conversation.messages[-1].augment
         else:
             raise ValueError("Could not pull messages as conversation does not exist.")
 

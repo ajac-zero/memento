@@ -1,10 +1,11 @@
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Callable, Any, AsyncGenerator
+from typing import Callable, Any
 
 
 class AsyncNoSQLMemory(Manager):
-    def __init__(self) -> None:
+    def __init__(self, client) -> None:
+        super().__init__(client)
         self.conversation: str | None = None
         self.template_factory: Callable | None = None
 
@@ -52,7 +53,7 @@ class AsyncNoSQLMemory(Manager):
         else:
             raise ValueError("Could not get history as conversation does not exist.")
 
-    def decorator(self, function: Callable) -> Callable:
+    def decorator(self, function):
         async def wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -61,7 +62,7 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ) -> str:
+        ):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
@@ -72,7 +73,7 @@ class AsyncNoSQLMemory(Manager):
 
         return wrapper
 
-    def stream_decorator(self, function: Callable) -> Callable:
+    def stream_decorator(self, function):
         async def stream_wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -81,7 +82,7 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ) -> AsyncGenerator[str, None]:
+        ):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
@@ -103,7 +104,7 @@ class AsyncNoSQLMemory(Manager):
         *,
         stream: bool = False,
         template_factory: Callable | None = None,
-    ) -> Callable:
+    ) :
         if template_factory != None:
             self.template_factory = template_factory
         if func != None:

@@ -5,15 +5,17 @@ from typing import overload
 
 
 class Repository:
+    def __init__(self, client) -> None:
+        self.client = client
+        self.database = client.memento
+
     @classmethod
-    async def init(cls, connection: str):
-        self = cls()
-        mongo = AsyncIOMotorClient(connection)
-        database = mongo.memento
-        await init_beanie(
-            database=database, document_models=[Assistant, Conversation, Message]
-        )
-        return self
+    def create(cls, connection: str):
+        client = AsyncIOMotorClient(connection)
+        return cls(client)
+
+    async def on(self) -> None:
+        await init_beanie(database=self.database, document_models=[Assistant, Conversation, Message])
 
     @overload
     async def read(self, model: type[Assistant], all: bool = False, **kwargs) -> Assistant | None:

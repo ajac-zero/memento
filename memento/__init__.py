@@ -7,5 +7,5 @@ class Memento(SQLMemory):
         super().__init__(connection, **kwargs)
 
     @staticmethod
-    async def nosql(connection: str) -> NoSQLMemory:
-        return await NoSQLMemory.init(connection)
+    def nosql(connection: str) -> NoSQLMemory:
+        return NoSQLMemory.create(connection)

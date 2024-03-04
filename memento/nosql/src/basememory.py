@@ -1,6 +1,7 @@
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Callable, Any
+from typing import Any, Callable, AsyncGenerator
 
 
 class AsyncNoSQLMemory(Manager):
@@ -62,14 +63,14 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> ChatCompletion:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             response = await function(messages=messages, *args, **kwargs)
             content = response.choices[0].message.content
             await self.message("assistant", content, settings)
-            return content
+            return response
 
         return wrapper
 
@@ -82,18 +83,19 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> AsyncGenerator[ChatCompletionChunk, None]:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
             buffer = ""
             response = await function(messages=messages, *args, **kwargs)
             async for chunk in response:
-                if len(chunk.choices) > 0:
-                    content = chunk.choices[0].delta.content
+                choices = chunk.choices
+                if len(choices) > 0:
+                    content = choices[0].delta.content
                     if content:
                         buffer += content
-                        yield content
+                yield chunk
             await self.message("assistant", buffer, settings)
 
         return stream_wrapper

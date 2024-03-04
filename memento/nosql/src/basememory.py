@@ -1,7 +1,6 @@
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Callable, Any
-from functools import wraps
+from typing import Callable, Any, AsyncGenerator
 
 
 class AsyncNoSQLMemory(Manager):
@@ -54,7 +53,6 @@ class AsyncNoSQLMemory(Manager):
             raise ValueError("Could not get history as conversation does not exist.")
 
     def decorator(self, function: Callable) -> Callable:
-        @wraps(function)
         async def wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -63,7 +61,7 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> str:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)
@@ -75,7 +73,6 @@ class AsyncNoSQLMemory(Manager):
         return wrapper
 
     def stream_decorator(self, function: Callable) -> Callable:
-        @wraps(function)
         async def stream_wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -84,7 +81,7 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ):
+        ) -> AsyncGenerator[str, None]:
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
             messages = await self.history(settings)

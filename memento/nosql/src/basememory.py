@@ -1,8 +1,13 @@
-from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
+from pydantic.dataclasses import dataclass
 from typing import Any, Callable
 from makefun import wraps
 
+@dataclass
+class Settings:
+    conversation: str | None = None
+    user: str = "user"
+    assistant: str = "assistant"
 
 class AsyncNoSQLMemory(Manager):
     def __init__(self, client) -> None:

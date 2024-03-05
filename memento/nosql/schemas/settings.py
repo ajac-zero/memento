@@ -1,5 +1,4 @@
 from pydantic.dataclasses import dataclass
-from typing import Optional
 from uuid import uuid4
 
 
@@ -9,6 +8,6 @@ def idmaker():
 
 @dataclass
 class Settings:
-    conversation: Optional[str] = None
+    conversation: str | None = None
     user: str = "user"
     assistant: str = "assistant"

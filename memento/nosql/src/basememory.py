@@ -1,7 +1,7 @@
-from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from memento.nosql.schemas.settings import Settings
 from memento.nosql.src.manager import Manager
-from typing import Any, Callable, AsyncGenerator
+from typing import Any, Callable
+from makefun import wraps
 
 
 class AsyncNoSQLMemory(Manager):
@@ -55,6 +55,11 @@ class AsyncNoSQLMemory(Manager):
             raise ValueError("Could not get history as conversation does not exist.")
 
     def decorator(self, function):
+        @wraps(
+            function,
+            prepend_args=["prompt", "augment", "idx", "user", "assistant"],
+            remove_args="messages",
+        )
         async def wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -63,11 +68,11 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ) -> ChatCompletion:
+        ):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
-            messages = await self.history(settings)
-            response = await function(messages=messages, *args, **kwargs)
+            kwargs["messages"] = await self.history(settings)
+            response = await function(*args, **kwargs)
             content = response.choices[0].message.content
             await self.message("assistant", content, settings)
             return response
@@ -75,6 +80,11 @@ class AsyncNoSQLMemory(Manager):
         return wrapper
 
     def stream_decorator(self, function):
+        @wraps(
+            function,
+            prepend_args=["prompt", "augment", "idx", "user", "assistant"],
+            remove_args="messages",
+        )
         async def stream_wrapper(
             prompt: str,
             augment: Any | None = None,
@@ -83,12 +93,12 @@ class AsyncNoSQLMemory(Manager):
             assistant: str = "assistant",
             *args,
             **kwargs,
-        ) -> AsyncGenerator[ChatCompletionChunk, None]:
+        ):
             settings = await self.set_settings(idx, user, assistant)
             await self.message("user", prompt, settings, augment)
-            messages = await self.history(settings)
+            kwargs["messages"] = await self.history(settings)
             buffer = ""
-            response = await function(messages=messages, *args, **kwargs)
+            response = await function(*args, **kwargs)
             async for chunk in response:
                 choices = chunk.choices
                 if len(choices) > 0:

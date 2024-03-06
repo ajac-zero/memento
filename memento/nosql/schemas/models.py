@@ -1,8 +1,10 @@
-from memento.nosql.schemas.settings import idmaker
 from typing import Any, List, Annotated, Optional
 from pydantic import BaseModel, Field
 from beanie import Document, Indexed
+from uuid import uuid4
 
+def idmaker():
+    return uuid4().hex
 
 class MessageContent(BaseModel):
     role: str

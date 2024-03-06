@@ -8,12 +8,19 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+makefun = "^1.15.2"
 alembic = "^1.13.1"
 sqlalchemy = "^2.0.25"
-psycopg2-binary = "^2.9.9"
-mysql-connector-python = "^8.3.0"
-beanie = "^1.25.0"
-makefun = "^1.15.2"
+psycopg2-binary = { version = "^2.9.9", optional = true }
+mysql-connector-python = { version = "^8.3.0", optional = true }
+beanie = { version = "^1.25.0", optional = true }
+
+[tool.poetry.extras]
+mysql = ["mysql-connector-python"]
+pgsql = ["psycopg2-binary"]
+nosql = ["beanie"]
+all = ["mysql-connector-python", "psycopg2-binary", "beanie"]
+
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.2.2"

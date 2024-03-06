@@ -1,7 +1,16 @@
 from memento.nosql.src.manager import Manager
 from pydantic.dataclasses import dataclass
 from typing import Any, Callable
+from inspect import Parameter
 from makefun import wraps
+
+PARAMS = [
+    Parameter("prompt", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
+    Parameter("augment", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=Any),
+    Parameter("idx", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=str),
+    Parameter("username", kind=Parameter.POSITIONAL_OR_KEYWORD, default="username", annotation=str),
+    Parameter("assistant", kind=Parameter.POSITIONAL_OR_KEYWORD, default="assistant", annotation=str),
+]
 
 @dataclass
 class Settings:
@@ -62,19 +71,19 @@ class AsyncNoSQLMemory(Manager):
     def decorator(self, function):
         @wraps(
             function,
-            prepend_args=["prompt", "augment", "idx", "user", "assistant"],
+            prepend_args=PARAMS,
             remove_args="messages",
         )
         async def wrapper(
             prompt: str,
             augment: Any | None = None,
             idx: str | None = None,
-            user: str = "user",
+            username: str = "user",
             assistant: str = "assistant",
             *args,
             **kwargs,
         ):
-            settings = await self.set_settings(idx, user, assistant)
+            settings = await self.set_settings(idx, username, assistant)
             await self.message("user", prompt, settings, augment)
             kwargs["messages"] = await self.history(settings)
             response = await function(*args, **kwargs)
@@ -87,19 +96,19 @@ class AsyncNoSQLMemory(Manager):
     def stream_decorator(self, function):
         @wraps(
             function,
-            prepend_args=["prompt", "augment", "idx", "user", "assistant"],
+            prepend_args=PARAMS,
             remove_args="messages",
         )
         async def stream_wrapper(
             prompt: str,
             augment: Any | None = None,
             idx: str | None = None,
-            user: str = "user",
+            username: str = "user",
             assistant: str = "assistant",
             *args,
             **kwargs,
         ):
-            settings = await self.set_settings(idx, user, assistant)
+            settings = await self.set_settings(idx, username, assistant)
             await self.message("user", prompt, settings, augment)
             kwargs["messages"] = await self.history(settings)
             buffer = ""

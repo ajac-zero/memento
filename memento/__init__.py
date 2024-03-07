@@ -1,6 +1,6 @@
-from openai import OpenAI, AzureOpenAI, AsyncOpenAI, AsyncAzureOpenAI
 from memento.nosql import NoSQLMemory
 from memento.sql import SQLMemory
+from typing import Any
 
 
 class Memento(SQLMemory):
@@ -13,14 +13,12 @@ class Memento(SQLMemory):
 
 
 def memory(
-    client: OpenAI | AzureOpenAI | AsyncOpenAI | AsyncAzureOpenAI,
+    client: Any,
     connection: str,
     nosql=False,
     stream=False,
     template_factory=None,
-) -> tuple[
-    OpenAI | AzureOpenAI | AsyncOpenAI | AsyncAzureOpenAI, SQLMemory | NoSQLMemory
-]:
+) -> tuple[Any, SQLMemory | NoSQLMemory]:
     if nosql is True:
         memento: NoSQLMemory = Memento.nosql(connection)
         client.chat.completions.create = memento(  # type: ignore

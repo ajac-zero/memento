@@ -26,8 +26,8 @@ class AsyncNoSQLMemory(Manager):
 
     async def set_settings(self, idx: str | None, user: str, assistant: str, **kwargs):
         settings = Settings(conversation=idx, user=user, assistant=assistant)
-        if settings.conversation == None:
-            if self.conversation == None:
+        if settings.conversation is None:
+            if self.conversation is None:
                 settings.conversation = await self.register_conversation(
                     user=settings.user, assistant=settings.assistant
                 )
@@ -35,7 +35,7 @@ class AsyncNoSQLMemory(Manager):
             else:
                 settings.conversation = self.conversation
         else:
-            if await self.get_conversation(settings.conversation) == None:
+            if await self.get_conversation(settings.conversation) is None:
                 raise ValueError("Conversation does not exist.")
         return settings
 
@@ -50,8 +50,8 @@ class AsyncNoSQLMemory(Manager):
     async def history(self, settings: Settings) -> list[dict[str, str]]:
         if settings.conversation:
             messages, augment = await self.pull_messages(settings.conversation)
-            if augment != None:
-                if self.template_factory != None:
+            if augment:
+                if self.template_factory:
                     messages[-1]["content"] = self.template_factory(
                         augment, messages[-1]["content"]
                     )
@@ -72,7 +72,6 @@ class AsyncNoSQLMemory(Manager):
         @wraps(
             function,
             prepend_args=PARAMS,
-            remove_args="messages",
         )
         async def wrapper(
             prompt: str,
@@ -97,7 +96,6 @@ class AsyncNoSQLMemory(Manager):
         @wraps(
             function,
             prepend_args=PARAMS,
-            remove_args="messages",
         )
         async def stream_wrapper(
             prompt: str,
@@ -115,7 +113,7 @@ class AsyncNoSQLMemory(Manager):
             response = await function(*args, **kwargs)
             async for chunk in response:
                 choices = chunk.choices
-                if len(choices) > 0:
+                if choices:
                     content = choices[0].delta.content
                     if content:
                         buffer += content
@@ -131,9 +129,9 @@ class AsyncNoSQLMemory(Manager):
         stream: bool = False,
         template_factory: Callable | None = None,
     ):
-        if template_factory != None:
+        if template_factory:
             self.template_factory = template_factory
-        if func is not None:
+        if func:
             return self.stream_decorator(func) if stream else self.decorator(func)
         else:
             return self.stream_decorator if stream else self.decorator

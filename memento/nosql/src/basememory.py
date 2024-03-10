@@ -1,4 +1,4 @@
-from memento.nosql.src.manager import Manager
+from memento.nosql.src.migrator import Migrator
 from pydantic.dataclasses import dataclass
 from typing import Any, Callable
 from inspect import Parameter
@@ -12,13 +12,15 @@ PARAMS = [
     Parameter("assistant", kind=Parameter.POSITIONAL_OR_KEYWORD, default="assistant", annotation=str),
 ]
 
+
 @dataclass
 class Settings:
     conversation: str | None = None
     user: str = "user"
     assistant: str = "assistant"
 
-class AsyncNoSQLMemory(Manager):
+
+class AsyncNoSQLMemory(Migrator):
     def __init__(self, client) -> None:
         super().__init__(client)
         self.conversation: str | None = None
@@ -57,13 +59,9 @@ class AsyncNoSQLMemory(Manager):
                     )
                 else:
                     try:
-                        messages[-1]["content"] = (
-                            augment + "\n" + messages[-1]["content"]
-                        )
+                        messages[-1]["content"] = (augment + "\n" + messages[-1]["content"])
                     except Exception:
-                        raise ValueError(
-                            f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed."
-                        )
+                        raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
             return messages
         else:
             raise ValueError("Could not get history as conversation does not exist.")

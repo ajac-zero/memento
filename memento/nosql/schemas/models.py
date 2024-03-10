@@ -1,10 +1,12 @@
+from pydantic import BaseModel, Field, field_validator
 from typing import Any, List, Annotated, Optional
-from pydantic import BaseModel, Field
 from beanie import Document, Indexed
 from uuid import uuid4
 
+
 def idmaker():
     return uuid4().hex
+
 
 class MessageContent(BaseModel):
     role: str
@@ -18,11 +20,15 @@ class Message(Document):
 
 
 class Conversation(Document):
-    idx: str = Field(default_factory=idmaker)
+    idx: Optional[str]
     user: Annotated[str, Indexed()]
     assistant: str
     messages: List[Message]
 
+    @field_validator('idx')
+    @classmethod
+    def setIDx(cls, idx: str | None) -> str:
+        return idx if idx else idmaker()
 
 class Assistant(Document):
     idx: str = Field(default_factory=idmaker)

@@ -37,15 +37,15 @@ class Manager(Repository):
             return assistant.idx
 
     async def commit_message(
-        self, conversation_idx: str, role: str, content: str, augment: str | None
+        self, role: str, content: str, conversation: str, augment: str | None = None
     ) -> str:
-        conversation = await self.read(Conversation, idx=conversation_idx)
-        if conversation:
+        conversation_obj = await self.read(Conversation, idx=conversation)
+        if conversation_obj:
             message = Message(
                 content=MessageContent(role=role, content=content), augment=augment
             )
-            conversation.messages.append(message)
-            await conversation.save()  # type: ignore
+            conversation_obj.messages.append(message)
+            await conversation_obj.save()  # type: ignore
             return message.idx
         else:
             raise ValueError("Could not save message as conversation does not exist.")
@@ -77,6 +77,6 @@ class Manager(Repository):
         else:
             raise ValueError("Could not delete conversation as it does not exist.")
 
-    async def get_conversation(self, idx: str) -> str | None:
-        conversation = await self.read(Conversation, idx=idx)
+    async def get_conversation(self, **kwargs) -> str | None:
+        conversation = await self.read(Conversation, **kwargs)
         return conversation.idx if conversation else None

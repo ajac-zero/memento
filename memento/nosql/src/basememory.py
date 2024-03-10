@@ -1,11 +1,10 @@
+from makefun import wraps, add_signature_parameters, remove_signature_parameters
 from memento.nosql.src.migrator import Migrator
-from pydantic.dataclasses import dataclass
+from inspect import signature, Parameter
 from typing import Any, Callable
-from inspect import Parameter
-from makefun import wraps
 
 PARAMS = [
-    Parameter("prompt", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
+    Parameter("message", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
     Parameter("augment", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=Any),
     Parameter("idx", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=str),
     Parameter("username", kind=Parameter.POSITIONAL_OR_KEYWORD, default="username", annotation=str),
@@ -13,66 +12,52 @@ PARAMS = [
 ]
 
 
-@dataclass
-class Settings:
-    conversation: str | None = None
-    user: str = "user"
-    assistant: str = "assistant"
-
-
 class AsyncNoSQLMemory(Migrator):
     def __init__(self, client) -> None:
         super().__init__(client)
-        self.conversation: str | None = None
+        self.local_conversation: str | None = None
         self.template_factory: Callable | None = None
 
-    async def set_settings(self, idx: str | None, user: str, assistant: str, **kwargs):
-        settings = Settings(conversation=idx, user=user, assistant=assistant)
-        if settings.conversation is None:
-            if self.conversation is None:
-                settings.conversation = await self.register_conversation(
-                    user=settings.user, assistant=settings.assistant
+    async def set_conversation(self, idx: str | None, user: str, assistant: str, **kwargs) -> str:
+        if idx is None:
+            if self.local_conversation is None:
+                recent_conversation = await self.get_conversation(
+                    user=user, assistant=assistant
                 )
-                self.conversation = settings.conversation
-            else:
-                settings.conversation = self.conversation
-        else:
-            if await self.get_conversation(settings.conversation) is None:
-                raise ValueError("Conversation does not exist.")
-        return settings
-
-    async def message(
-        self, role: str, content: str, settings: Settings, augment: str | None = None
-    ) -> None:
-        if settings.conversation:
-            await self.commit_message(settings.conversation, role, content, augment)
-        else:
-            raise ValueError("Could not save message as conversation does not exist.")
-
-    async def history(self, settings: Settings) -> list[dict[str, str]]:
-        if settings.conversation:
-            messages, augment = await self.pull_messages(settings.conversation)
-            if augment:
-                if self.template_factory:
-                    messages[-1]["content"] = self.template_factory(
-                        augment, messages[-1]["content"]
+                if recent_conversation is None:
+                    idx = await self.register_conversation(
+                        user=user, assistant=assistant
                     )
                 else:
-                    try:
-                        messages[-1]["content"] = (augment + "\n" + messages[-1]["content"])
-                    except Exception:
-                        raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
-            return messages
-        else:
-            raise ValueError("Could not get history as conversation does not exist.")
+                    idx = recent_conversation
+                self.local_conversation = idx
+            else:
+                idx = self.local_conversation
+        return idx
+
+    async def history(self, conversation: str) -> list[dict[str, str]]:
+        messages, augment = await self.pull_messages(conversation)
+        if augment:
+            if self.template_factory:
+                messages[-1]["content"] = self.template_factory(augment, messages[-1]["content"])
+            else:
+                try:
+                    messages[-1]["content"] = (messages[-1]["content"] + "\n" + augment)
+                except Exception:
+                    raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
+        return messages
+
+    def build_signature(self, func):
+        old_signature = signature(func)
+        new_signature = add_signature_parameters(old_signature, first=PARAMS)
+        if 'messages' in new_signature.parameters:
+            new_signature = remove_signature_parameters(new_signature, 'messages')
+        return new_signature
 
     def decorator(self, function):
-        @wraps(
-            function,
-            prepend_args=PARAMS,
-        )
+        @wraps(function, new_sig=self.build_signature(function))
         async def wrapper(
-            prompt: str,
+            message: str,
             augment: Any | None = None,
             idx: str | None = None,
             username: str = "user",
@@ -80,23 +65,20 @@ class AsyncNoSQLMemory(Migrator):
             *args,
             **kwargs,
         ):
-            settings = await self.set_settings(idx, username, assistant)
-            await self.message("user", prompt, settings, augment)
-            kwargs["messages"] = await self.history(settings)
+            conversation = await self.set_conversation(idx, username, assistant)
+            await self.commit_message("user", message, conversation, augment)
+            kwargs["messages"] = await self.history(conversation)
             response = await function(*args, **kwargs)
             content = response.choices[0].message.content
-            await self.message("assistant", content, settings)
+            await self.commit_message("assistant", message, conversation)
             return response
 
         return wrapper
 
     def stream_decorator(self, function):
-        @wraps(
-            function,
-            prepend_args=PARAMS,
-        )
+        @wraps(function, new_sig=self.build_signature(function))
         async def stream_wrapper(
-            prompt: str,
+            message: str,
             augment: Any | None = None,
             idx: str | None = None,
             username: str = "user",
@@ -104,9 +86,9 @@ class AsyncNoSQLMemory(Migrator):
             *args,
             **kwargs,
         ):
-            settings = await self.set_settings(idx, username, assistant)
-            await self.message("user", prompt, settings, augment)
-            kwargs["messages"] = await self.history(settings)
+            conversation = await self.set_conversation(idx, username, assistant)
+            await self.commit_message("user", message, conversation, augment)
+            kwargs["messages"] = await self.history(conversation)
             buffer = ""
             response = await function(*args, **kwargs)
             async for chunk in response:
@@ -116,7 +98,7 @@ class AsyncNoSQLMemory(Migrator):
                     if content:
                         buffer += content
                 yield chunk
-            await self.message("assistant", buffer, settings)
+            await self.commit_message("assistant", buffer, conversation)
 
         return stream_wrapper
 

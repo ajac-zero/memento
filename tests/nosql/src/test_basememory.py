@@ -1,6 +1,7 @@
 from memento.nosql.src.basememory import AsyncNoSQLMemory
 from openai.types.chat import ChatCompletion
 from openai import AsyncAzureOpenAI
+from typing import AsyncGenerator
 import pytest_asyncio
 import pytest
 
@@ -29,3 +30,26 @@ async def test_async_response(ai: AsyncAzureOpenAI):
     response = await gen(message="Hello", model="gpt4-2")
 
     assert isinstance(response, ChatCompletion)
+
+@pytest.mark.asyncio
+async def test_async_response_decorator(ai: AsyncAzureOpenAI):
+    memento = AsyncNoSQLMemory.create("mongodb://localhost:27017")
+    await memento.on()
+
+    @memento
+    async def gen(*args, **kwargs):
+        return await ai.chat.completions.create(*args, **kwargs)
+
+    response = await gen(message="Hello", model="gpt4-2")
+
+    assert isinstance(response, ChatCompletion)
+
+@pytest.mark.asyncio
+async def test_async_stream_response(ai: AsyncAzureOpenAI):
+    memento = AsyncNoSQLMemory.create("mongodb://localhost:27017")
+    await memento.on()
+
+    gen = memento(ai.chat.completions.create, stream=True)
+    response = gen(message="Hello", model="gpt4-2", stream=True)
+
+    assert isinstance(response, AsyncGenerator)

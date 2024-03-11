@@ -1,7 +1,8 @@
 from makefun import wraps, add_signature_parameters, remove_signature_parameters
+from typing import overload, Any, Callable, Literal,  AsyncGenerator, Awaitable
 from memento.nosql.src.migrator import Migrator
 from inspect import signature, Parameter
-from typing import Any, Callable
+
 
 PARAMS = [
     Parameter("message", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
@@ -35,7 +36,7 @@ class AsyncNoSQLMemory(Migrator):
                 idx = self.local_conversation
         return idx
 
-    async def history(self, conversation: str) -> list[dict[str, str]]:
+    async def pull_conversation(self, conversation: str) -> list[dict[str, str]]:
         messages, augment = await self.pull_messages(conversation)
         if augment:
             if self.template_factory:
@@ -54,7 +55,7 @@ class AsyncNoSQLMemory(Migrator):
             new_signature = remove_signature_parameters(new_signature, 'messages')
         return new_signature
 
-    def decorator(self, function):
+    def decorator(self, function: Callable) -> Callable[..., Awaitable]:
         @wraps(function, new_sig=self.build_signature(function))
         async def wrapper(
             message: str,
@@ -67,7 +68,7 @@ class AsyncNoSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.history(conversation)
+            kwargs["messages"] = await self.pull_conversation(conversation)
             response = await function(*args, **kwargs)
             content = response.choices[0].message.content
             await self.commit_message("assistant", message, conversation)
@@ -75,7 +76,7 @@ class AsyncNoSQLMemory(Migrator):
 
         return wrapper
 
-    def stream_decorator(self, function):
+    def stream_decorator(self, function: Callable) -> Callable[..., AsyncGenerator]:
         @wraps(function, new_sig=self.build_signature(function))
         async def stream_wrapper(
             message: str,
@@ -88,7 +89,7 @@ class AsyncNoSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.history(conversation)
+            kwargs["messages"] = await self.pull_conversation(conversation)
             buffer = ""
             response = await function(*args, **kwargs)
             async for chunk in response:
@@ -102,13 +103,53 @@ class AsyncNoSQLMemory(Migrator):
 
         return stream_wrapper
 
+    @overload
     def __call__(
         self,
-        func=None,
+        func: Callable,
+        *,
+        stream: Literal[False] = False,
+        template_factory: Callable | None = None,
+    ) -> Callable[..., Awaitable]:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable,
+        *,
+        stream: Literal[True],
+        template_factory: Callable | None = None,
+    ) -> Callable[..., AsyncGenerator]:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        func: Callable | None = None,
+        *,
+        stream: Literal[False],
+        template_factory: Callable | None = None,
+    ) -> Callable[..., Callable[..., Awaitable]]:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        func: None,
+        *,
+        stream: Literal[True],
+        template_factory: Callable | None = None,
+    ) -> Callable[..., Callable[..., AsyncGenerator]]:
+        ...
+
+    def __call__(
+        self,
+        func: Callable | None = None,
         *,
         stream: bool = False,
         template_factory: Callable | None = None,
-    ):
+    ) -> Callable[..., Awaitable] | Callable[..., AsyncGenerator] | Callable[..., Callable[..., Awaitable]] | Callable[..., Callable[..., AsyncGenerator]]:
         if template_factory:
             self.template_factory = template_factory
         if func:

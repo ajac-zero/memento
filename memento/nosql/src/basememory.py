@@ -126,7 +126,7 @@ class AsyncNoSQLMemory(Migrator):
     @overload
     def __call__(
         self,
-        func: Callable | None = None,
+        func: None = None,
         *,
         stream: Literal[False],
         template_factory: Callable | None = None,
@@ -136,7 +136,7 @@ class AsyncNoSQLMemory(Migrator):
     @overload
     def __call__(
         self,
-        func: None,
+        func: None = None,
         *,
         stream: Literal[True],
         template_factory: Callable | None = None,

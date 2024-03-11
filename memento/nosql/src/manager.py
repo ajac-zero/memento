@@ -56,7 +56,7 @@ class Manager(Repository):
         conversation = await self.read(Conversation, idx=conversation_idx)
         if conversation:
             return [
-                message.content.dict() for message in conversation.messages
+                message.content.model_dump() for message in conversation.messages
             ], conversation.messages[-1].augment
         else:
             raise ValueError("Could not pull messages as conversation does not exist.")

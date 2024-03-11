@@ -40,7 +40,7 @@ async def test_async_response_decorator(ai: AsyncAzureOpenAI):
     async def gen(*args, **kwargs):
         return await ai.chat.completions.create(*args, **kwargs)
 
-    response = await gen(message="Hello", model="gpt4-2")
+    response = await gen(message="Hi", model="gpt4-2")
 
     assert isinstance(response, ChatCompletion)
 
@@ -51,5 +51,18 @@ async def test_async_stream_response(ai: AsyncAzureOpenAI):
 
     gen = memento(ai.chat.completions.create, stream=True)
     response = gen(message="Hello", model="gpt4-2", stream=True)
+
+    assert isinstance(response, AsyncGenerator)
+
+@pytest.mark.asyncio
+async def test_async_stream_response_decorator(ai: AsyncAzureOpenAI):
+    memento = AsyncNoSQLMemory.create("mongodb://localhost:27017")
+    await memento.on()
+
+    @memento(stream=True)
+    async def gen(*args, stream=True, **kwargs):
+        return await ai.chat.completions.create(*args, **kwargs, stream=stream)
+
+    response = gen(message="Hi", model="gpt4-2")
 
     assert isinstance(response, AsyncGenerator)

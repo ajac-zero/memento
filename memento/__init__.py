@@ -1,6 +1,6 @@
 from memento.nosql import AsyncNoSQLMemory
-from typing import Any, Callable, Literal
 from memento.sql import SQLMemory
+from typing import Any, Callable
 
 
 class Memento(SQLMemory):
@@ -13,22 +13,28 @@ class Memento(SQLMemory):
 
 
 def patch(
-    client: Any,
     connection: str,
     nosql: bool = False,
     stream: bool = False,
+    openai: Any | None = None,
+    function: Callable | None = None,
     template_factory: Callable | None = None,
 ):
-    func: Callable = client.chat.completions.create
     if nosql:
         memento = Memento.nosql(connection)
-        client.chat.completions.create = memento(
-            func, stream=stream, template_factory=template_factory #type: ignore
-        )
-        return client, memento
     else:
         memento = Memento(connection)
-        client.chat.completions.create = memento(
-            func, stream=stream, template_factory=template_factory
+
+    if openai:
+        func = openai.chat.completions.create
+        openai.chat.completions.create = memento(
+                func, stream=stream, template_factory=template_factory #type: ignore
+            )
+        return openai, memento
+    elif function:
+        function = memento(
+            function, stream=stream, template_factory=template_factory #type: ignore
         )
-        return client
+        return function, memento
+    else:
+        raise ValueError("Either OpenAI client or generation function required.")

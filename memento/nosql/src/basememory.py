@@ -36,7 +36,7 @@ class AsyncNoSQLMemory(Migrator):
                 idx = self.local_conversation
         return idx
 
-    async def pull_conversation(self, conversation: str) -> list[dict[str, str]]:
+    async def prev_messages(self, conversation: str) -> list[dict[str, str]]:
         messages, augment = await self.pull_messages(conversation)
         if augment:
             if self.template_factory:
@@ -68,10 +68,10 @@ class AsyncNoSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.pull_conversation(conversation)
+            kwargs["messages"] = await self.prev_messages(conversation)
             response = await function(*args, **kwargs)
             content = response.choices[0].message.content
-            await self.commit_message("assistant", message, conversation)
+            await self.commit_message("assistant", content, conversation)
             return response
 
         return wrapper
@@ -89,7 +89,7 @@ class AsyncNoSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.pull_conversation(conversation)
+            kwargs["messages"] = await self.prev_messages(conversation)
             buffer = ""
             response = await function(*args, **kwargs)
             async for chunk in response:
@@ -104,43 +104,19 @@ class AsyncNoSQLMemory(Migrator):
         return stream_wrapper
 
     @overload
-    def __call__(
-        self,
-        func: Callable,
-        *,
-        stream: Literal[False] = False,
-        template_factory: Callable | None = None,
-    ) -> Callable[..., Awaitable]:
+    def __call__(self, func: Callable, *, stream: Literal[False] = False, template_factory: Callable | None = None) -> Callable[..., Awaitable]:
         ...
 
     @overload
-    def __call__(
-        self,
-        func: Callable,
-        *,
-        stream: Literal[True],
-        template_factory: Callable | None = None,
-    ) -> Callable[..., AsyncGenerator]:
+    def __call__(self, func: Callable, *, stream: Literal[True], template_factory: Callable | None = None) -> Callable[..., AsyncGenerator]:
         ...
 
     @overload
-    def __call__(
-        self,
-        func: None = None,
-        *,
-        stream: Literal[False],
-        template_factory: Callable | None = None,
-    ) -> Callable[..., Callable[..., Awaitable]]:
+    def __call__(self, func: None = None, *, stream: Literal[False], template_factory: Callable | None = None) -> Callable[..., Callable[..., Awaitable]]:
         ...
 
     @overload
-    def __call__(
-        self,
-        func: None = None,
-        *,
-        stream: Literal[True],
-        template_factory: Callable | None = None,
-    ) -> Callable[..., Callable[..., AsyncGenerator]]:
+    def __call__(self, func: None = None, *, stream: Literal[True], template_factory: Callable | None = None) -> Callable[..., Callable[..., AsyncGenerator]]:
         ...
 
     def __call__(

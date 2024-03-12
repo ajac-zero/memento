@@ -1,1 +1,1 @@
-from memento.nosql.src.basememory import AsyncNoSQLMemory as NoSQLMemory
+from memento.nosql.src.basememory import AsyncNoSQLMemory

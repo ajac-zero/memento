@@ -1,4 +1,4 @@
-from memento.sql.schemas.models import Assistant, Conversation, Message, User
+from memento.sql.synchronous.schemas.models import Assistant, Conversation, Message, User
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 

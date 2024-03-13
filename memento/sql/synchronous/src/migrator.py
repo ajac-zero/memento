@@ -1,5 +1,5 @@
-from memento.sql.src.sync.manager import Manager
-from memento.sql.schemas.models import Base
+from memento.sql.synchronous.src.manager import Manager
+from memento.sql.synchronous.schemas.models import Base
 from sqlalchemy.orm import sessionmaker
 from alembic.config import Config
 from alembic import command

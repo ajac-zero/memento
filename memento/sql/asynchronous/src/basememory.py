@@ -1,45 +1,45 @@
-from memento.sql.src.sync.migrator import Migrator
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+from memento.sql.asynchronous.src.migrator import Migrator
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from typing import Callable, Any
 from functools import wraps
 
 
-class SQLMemory(Migrator):
+class AsyncSQLMemory(Migrator):
     def __init__(self, connection: str, **kwargs):
-        super().__init__(sessionmaker(bind=create_engine(connection)))
+        super().__init__(async_sessionmaker(bind=create_async_engine(connection)))
         self.update_database(connection)
         self.current_conversation: int | None = None
         self.template_factory: Callable[..., str] | None = None
 
-    def set_conversation(self, idx: int | None, user: str, assistant: str, **kwargs) -> int:
+    async def set_conversation(self, idx: int | None, user: str, assistant: str, **kwargs) -> int:
         if idx is None:
             if self.current_conversation is None:
-                latest_conversation = self.pull_conversations(user=user, assistant=assistant)
+                latest_conversation = await self.pull_conversations(user=user, assistant=assistant)
                 if latest_conversation:
                     idx = latest_conversation[-1]
                 else:
-                    idx = self.register_conversation(user=user, assistant=assistant)
+                    idx = await self.register_conversation(user=user, assistant=assistant)
                 self.current_conversation = idx
             else:
                 idx = self.current_conversation
         return idx
 
-    def prev_messages(self, conversation: int) -> list[dict[str, str]]:
-        messages, augment = self.pull_messages(conversation)
+    async def prev_messages(self, conversation: int) -> list[dict[str, str]]:
+        messages, augment = await self.pull_messages(conversation)
         if augment:
             if self.template_factory:
                 messages[-1]["content"] = self.template_factory(augment, messages)
             else:
                 try:
-                    messages[-1]["content"] = (messages[-1]["content"] + "\n" + augment)
+                    messages[-1]["content"] = messages[-1]["content"] + "\n" + augment
                 except Exception:
                     raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
         return messages
 
     def decorator(self, function):
         @wraps(function)
-        def wrapper(
+        async def wrapper(
             message: str,
             augment: Any | None = None,
             idx: int | None = None,
@@ -48,19 +48,19 @@ class SQLMemory(Migrator):
             *args,
             **kwargs,
         ):
-            conversation = self.set_conversation(idx, username, assistant)
-            self.commit_message("user", message, conversation, augment)
+            conversation = await self.set_conversation(idx, username, assistant)
+            await self.commit_message("user", message, conversation, augment)
             kwargs["messages"] = self.prev_messages(conversation)
             response = function(*args, **kwargs)
             content = response.choices[0].message.content
-            self.commit_message("assistant", content, conversation)
+            await self.commit_message("assistant", content, conversation)
             return response
 
         return wrapper
 
     def stream_decorator(self, function):
         @wraps(function)
-        def stream_wrapper(
+        async def stream_wrapper(
             message: str,
             augment: Any | None = None,
             idx: int | None = None,
@@ -69,9 +69,9 @@ class SQLMemory(Migrator):
             *args,
             **kwargs,
         ):
-            conversation = self.set_conversation(idx, username, assistant)
-            self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = self.prev_messages(conversation)
+            conversation = await self.set_conversation(idx, username, assistant)
+            await self.commit_message("user", message, conversation, augment)
+            kwargs["messages"] = await self.prev_messages(conversation)
             buffer = ""
             response = function(*args, **kwargs)
             for chunk in response:
@@ -81,7 +81,7 @@ class SQLMemory(Migrator):
                     if content:
                         buffer += content
                 yield chunk
-            self.commit_message("assistant", buffer, conversation)
+            await self.commit_message("assistant", buffer, conversation)
 
         return stream_wrapper
 

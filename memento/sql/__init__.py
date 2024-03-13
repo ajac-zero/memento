@@ -1,2 +1,1 @@
-from memento.sql.src import AsyncSQLMemory
-from memento.sql.src import SQLMemory
+from memento.sql.synchronous import SQLMemory

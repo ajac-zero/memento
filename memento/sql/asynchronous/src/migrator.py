@@ -1,6 +1,6 @@
-from memento.sql.src.asynchronous.manager import Manager
+from memento.sql.asynchronous.src.manager import Manager
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from memento.sql.schemas.models import Base
+from memento.sql.asynchronous.schemas.models import Base
 from alembic.config import Config
 from alembic import command
 import os

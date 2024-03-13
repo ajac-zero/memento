@@ -1,7 +1,8 @@
 from memento.sql.asynchronous.schemas.models import Assistant, Conversation, Message, User
 from memento.sql.asynchronous.src.repository import Repository
 from sqlalchemy.ext.asyncio import async_sessionmaker
-import json
+from json import loads, dumps
+from typing import Any
 
 
 class Manager(Repository):
@@ -39,23 +40,21 @@ class Manager(Repository):
                 "Could not register conversation because either user or assistant do not exist."
             )
 
-    async def commit_message(self, role: str, content: str, conversation: int, augment: str | None = None) -> int:
+    async def commit_message(self, role: str, content: str, conversation: int, augment: Any | None = None) -> int:
         return await self.create(
             Message(
                 role=role,
                 content=content,
                 augment=augment,
                 conversation=conversation,
-                prompt=json.dumps(
-                    {"role": role, "content": content}
-                ),
+                prompt=dumps({"role": role, "content": content}),
             )
         )
 
     async def pull_messages(self, conversation: int) -> tuple[list[dict], str | None]:
         conversation_instance = await self.read(Conversation, id=conversation)
         if conversation_instance:
-            messages = [json.loads(message.prompt) for message in conversation_instance.messages]
+            messages = [loads(message.prompt) for message in conversation_instance.messages]
             augment = conversation_instance.messages[-1].augment
             return messages, augment
         else:

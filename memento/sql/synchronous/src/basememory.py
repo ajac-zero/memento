@@ -85,7 +85,7 @@ class SQLMemory(Migrator):
 
         return stream_wrapper
 
-    def __call__(self, func: Callable | None, *, stream: bool = False, template_factory: Callable | None = None):
+    def __call__(self, func: Callable | None = None, *, stream: bool = False, template_factory: Callable | None = None):
         if template_factory:
             self.template_factory = template_factory
         if func:

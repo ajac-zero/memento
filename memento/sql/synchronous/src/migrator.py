@@ -6,8 +6,8 @@ from alembic import command
 import os
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-ALEMBIC_INI_PATH = os.path.join(DIR_PATH, "../..", "alembic.ini")
-MIGRATION_DIR_PATH = os.path.join(DIR_PATH, "../..", "migrations")
+ALEMBIC_INI_PATH = os.path.join(DIR_PATH, "..", "alembic.ini")
+MIGRATION_DIR_PATH = os.path.join(DIR_PATH, "..", "migrations")
 
 
 class Migrator(Manager):

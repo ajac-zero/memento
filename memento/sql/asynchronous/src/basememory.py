@@ -50,8 +50,8 @@ class AsyncSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = self.prev_messages(conversation)
-            response = function(*args, **kwargs)
+            kwargs["messages"] = await self.prev_messages(conversation)
+            response = await function(*args, **kwargs)
             content = response.choices[0].message.content
             await self.commit_message("assistant", content, conversation)
             return response
@@ -73,8 +73,8 @@ class AsyncSQLMemory(Migrator):
             await self.commit_message("user", message, conversation, augment)
             kwargs["messages"] = await self.prev_messages(conversation)
             buffer = ""
-            response = function(*args, **kwargs)
-            for chunk in response:
+            response = await function(*args, **kwargs)
+            async for chunk in response:
                 choices = chunk.choices
                 if choices:
                     content = choices[0].delta.content
@@ -85,7 +85,7 @@ class AsyncSQLMemory(Migrator):
 
         return stream_wrapper
 
-    def __call__(self, func: Callable | None, *, stream: bool = False, template_factory: Callable | None = None):
+    def __call__(self, func: Callable | None = None, *, stream: bool = False, template_factory: Callable | None = None):
         if template_factory:
             self.template_factory = template_factory
         if func:

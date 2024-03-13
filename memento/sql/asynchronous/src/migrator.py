@@ -1,14 +1,14 @@
+from memento.sql.asynchronous.schemas.models import Base
 from memento.sql.asynchronous.src.manager import Manager
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from memento.sql.asynchronous.schemas.models import Base
 from alembic.config import Config
 from alembic import command
 import os
 
-
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-ALEMBIC_INI_PATH = os.path.join(DIR_PATH, "../..", "alembic.ini")
-MIGRATION_DIR_PATH = os.path.join(DIR_PATH, "../..", "migrations")
+ALEMBIC_INI_PATH = os.path.join(DIR_PATH, "..", "alembic.ini")
+MIGRATION_DIR_PATH = os.path.join(DIR_PATH, "..", "migrations")
+
 
 class Migrator(Manager):
     def __init__(self, sessionmaker: async_sessionmaker):

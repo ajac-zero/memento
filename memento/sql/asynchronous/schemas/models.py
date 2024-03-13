@@ -1,8 +1,10 @@
-from sqlalchemy.orm import declarative_base, relationship, mapped_column as column
-from sqlalchemy import Integer, String, Text, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, relationship, mapped_column as column
+from sqlalchemy import Integer, String, Text, ForeignKey, PickleType
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-Base = declarative_base()
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
 
 
 class User(Base):
@@ -52,7 +54,7 @@ class Message(Base):
     role = column(String(9), nullable=False)
     content = column(Text, nullable=False)
     prompt = column(Text, nullable=False)
-    augment = column(Text)
+    augment = column(PickleType)
 
     def __repr__(self) -> str:
         return f"""Message(id={self.id}, conversation={self.conversation}, role="{self.role}", content="{self.content}")"""

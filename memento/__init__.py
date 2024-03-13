@@ -1,4 +1,4 @@
-from memento.nosql import AsyncNoSQLMemory
+from memento.nosql import NoSQLMemory, AsyncNoSQLMemory
 from memento.sql import SQLMemory, AsyncSQLMemory
 from typing import Any, Callable
 
@@ -8,8 +8,8 @@ class Memento(SQLMemory):
         super().__init__(connection, **kwargs)
 
     @staticmethod
-    def nosql(connection: str) -> AsyncNoSQLMemory:
-        return AsyncNoSQLMemory.create(connection)
+    def nosql(connection: str) -> NoSQLMemory:
+        return NoSQLMemory.create(connection)
 
 class AsyncMemento(AsyncSQLMemory):
     def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):

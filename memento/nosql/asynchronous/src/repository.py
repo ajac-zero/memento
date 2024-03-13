@@ -1,4 +1,4 @@
-from memento.nosql.schemas.models import Assistant, Conversation, Message
+from memento.nosql.asynchronous.schemas.models import Assistant, Conversation, Message
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import overload, Literal
 from beanie import init_beanie

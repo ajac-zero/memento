@@ -1,6 +1,6 @@
 from makefun import wraps, add_signature_parameters, remove_signature_parameters
 from typing import overload, Any, Callable, Literal,  AsyncGenerator, Awaitable
-from memento.nosql.src.migrator import Migrator
+from memento.nosql.asynchronous.src.migrator import Migrator
 from inspect import signature, Parameter
 
 

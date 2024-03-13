@@ -1,4 +1,4 @@
-from memento.nosql.src.manager import Manager
+from memento.nosql.asynchronous.src.manager import Manager
 from beanie import init_beanie
 
 

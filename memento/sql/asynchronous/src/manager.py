@@ -1,8 +1,8 @@
 from memento.sql.asynchronous.schemas.models import Assistant, Conversation, Message, User
 from memento.sql.asynchronous.src.repository import Repository
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from typing import Any, Literal
 from json import loads, dumps
-from typing import Any
 
 
 class Manager(Repository):
@@ -86,3 +86,16 @@ class Manager(Repository):
 
     async def delete_conversation(self, id: int):
         return await self.delete(Conversation, id=id)
+
+    async def query(
+        self,
+        model: Literal["Assistant", "Conversation"],
+        all: bool = False,
+        **kwargs
+    ):
+        if model is "Assistant":
+            return await self.read(Assistant, all, **kwargs)
+        elif model is "Conversation":
+            return await self.read(Conversation, all, **kwargs)
+        else:
+            raise ValueError("Invalid model, only 'Assistant', 'Conversation', 'Message' allowed.")

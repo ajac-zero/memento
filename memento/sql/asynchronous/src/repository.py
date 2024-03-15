@@ -1,7 +1,7 @@
 from memento.sql.asynchronous.schemas.models import Assistant, Conversation, Message, User
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from typing import overload, Literal, Sequence
 from sqlalchemy.exc import NoResultFound
-from typing import overload, Literal
 from sqlalchemy import select
 
 class Repository:
@@ -48,6 +48,9 @@ class Repository:
     async def read(self, model: type[Conversation], all: Literal[True], **kwargs) -> list[Conversation] | None: ...
 
     @overload
+    async def read(self, model: type[Conversation], all: bool = False, **kwargs): ...
+
+    @overload
     async def read(self, model: type[Assistant], all: bool = False, **kwargs) -> Assistant | None: ...
 
     async def read(
@@ -55,8 +58,8 @@ class Repository:
         model: type[User] | type[Assistant] | type[Conversation],
         all: bool = False,
         **kwargs,
-    ) -> User | Assistant | Conversation | list[User] | list[Assistant] | list[Conversation] | None:
+    ) -> User | Assistant | Conversation | Sequence[User | Assistant | Conversation] | None:
         async with self.sessionmaker() as session:
             stmt = select(model).filter_by(**kwargs)
             query = (await session.scalars(stmt)).unique()
-            return query.all() if all else query.first() #type: ignore
+            return query.all() if all else query.first()

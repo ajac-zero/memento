@@ -31,6 +31,9 @@ class Repository:
     @overload
     def read(self, model: type[Conversation], all: Literal[True], **kwargs) -> list[Conversation] | None: ...
 
+    @overload
+    def read(self, model: type[Assistant] | type[Conversation], all: bool = False, **kwargs): ...
+
     def read(
         self,
         model: type[Assistant] | type[Conversation],

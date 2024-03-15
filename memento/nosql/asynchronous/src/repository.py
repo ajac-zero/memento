@@ -20,28 +20,19 @@ class Repository:
         )
 
     @overload
-    async def read(
-        self, model: type[Assistant], all: Literal[False] = False, **kwargs
-    ) -> Assistant | None:
-        ...
+    async def read(self, model: type[Assistant], all: Literal[False] = False, **kwargs) -> Assistant | None: ...
 
     @overload
-    async def read(
-        self, model: type[Assistant], all: Literal[True], **kwargs
-    ) -> list[Assistant] | None:
-        ...
+    async def read(self, model: type[Assistant], all: Literal[True], **kwargs) -> list[Assistant] | None: ...
 
     @overload
-    async def read(
-        self, model: type[Conversation], all: Literal[False] = False, **kwargs
-    ) -> Conversation | None:
-        ...
+    async def read(self, model: type[Conversation], all: Literal[False] = False, **kwargs) -> Conversation | None: ...
 
     @overload
-    async def read(
-        self, model: type[Conversation], all: Literal[True], **kwargs
-    ) -> list[Conversation] | None:
-        ...
+    async def read(self, model: type[Conversation], all: Literal[True], **kwargs) -> list[Conversation] | None: ...
+
+    @overload
+    async def read(self, model: type[Assistant] | type[Conversation], all: bool = False, **kwargs): ...
 
     async def read(
         self,

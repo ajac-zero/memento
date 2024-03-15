@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "memento-llm"
-version = "0.1.8.4"
+version = "0.1.8.5"
 description = "Simple LLM Memory"
 authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
 packages = [{ include = "memento" }]

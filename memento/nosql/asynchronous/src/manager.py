@@ -5,6 +5,7 @@ from memento.nosql.asynchronous.schemas.models import (
     Message,
     MessageContent,
 )
+from typing import Literal
 
 
 class Manager(Repository):
@@ -80,3 +81,16 @@ class Manager(Repository):
     async def get_conversation(self, **kwargs) -> str | None:
         conversation = await self.read(Conversation, **kwargs)
         return conversation.idx if conversation else None
+
+    async def query(
+        self,
+        model: Literal["Assistant", "Conversation"],
+        all: bool = False,
+        **kwargs
+    ):
+        if model is "Assistant":
+            return await self.read(Assistant, all, **kwargs)
+        elif model is "Conversation":
+            return await self.read(Conversation, all, **kwargs)
+        else:
+            raise ValueError("Invalid model, only 'Assistant', 'Conversation', 'Message' allowed.")

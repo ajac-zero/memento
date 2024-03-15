@@ -1,6 +1,7 @@
 from memento.sql.synchronous.schemas.models import Assistant, Conversation, Message, User
 from memento.sql.synchronous.src.repository import Repository
 from sqlalchemy.orm import sessionmaker
+from typing import Literal
 import json
 
 
@@ -87,3 +88,16 @@ class Manager(Repository):
 
     def delete_conversation(self, id: int):
         return self.delete(Conversation, id=id)
+
+    def query(
+        self,
+        model: Literal["Assistant", "Conversation"],
+        all: bool = False,
+        **kwargs
+    ):
+        if model is "Assistant":
+            return self.read(Assistant, all, **kwargs)
+        elif model is "Conversation":
+            return self.read(Conversation, all, **kwargs)
+        else:
+            raise ValueError("Invalid model, only 'Assistant', 'Conversation', 'Message' allowed.")

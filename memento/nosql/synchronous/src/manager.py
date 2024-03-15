@@ -5,6 +5,7 @@ from memento.nosql.synchronous.schemas.models import (
     Message,
     MessageContent,
 )
+from typing import Literal
 
 
 class Manager(Repository):
@@ -45,7 +46,7 @@ class Manager(Repository):
                 content=MessageContent(role=role, content=content), augment=augment
             )
             conversation_obj.messages.append(message)
-            await conversation_obj.save()  # type: ignore
+            conversation_obj.save()  # type: ignore
             return message.idx
         else:
             raise ValueError("Could not save message as conversation does not exist.")
@@ -64,7 +65,7 @@ class Manager(Repository):
     def delete_assistant(self, name: str) -> str:
         assistant = self.read(Assistant, name=name)
         if assistant:
-            await assistant.delete()  # type: ignore
+            assistant.delete()  # type: ignore
             return assistant.idx
         else:
             raise ValueError("Could not delete assistant as it does not exist.")
@@ -72,7 +73,7 @@ class Manager(Repository):
     def delete_conversation(self, idx: str) -> str:
         conversation = self.read(Conversation, idx=idx)
         if conversation:
-            await conversation.delete()  # type: ignore
+            conversation.delete()  # type: ignore
             return conversation.idx #type: ignore
         else:
             raise ValueError("Could not delete conversation as it does not exist.")
@@ -80,3 +81,16 @@ class Manager(Repository):
     def get_conversation(self, **kwargs) -> str | None:
         conversation = self.read(Conversation, **kwargs)
         return conversation.idx if conversation else None
+
+    def query(
+        self,
+        model: Literal["Assistant", "Conversation"],
+        all: bool = False,
+        **kwargs
+    ):
+        if model is "Assistant":
+            return self.read(Assistant, all, **kwargs)
+        elif model is "Conversation":
+            return self.read(Conversation, all, **kwargs)
+        else:
+            raise ValueError("Invalid model, only 'Assistant', 'Conversation', 'Message' allowed.")

@@ -25,8 +25,8 @@ class SQLMemory(Migrator):
                 idx = self.current_conversation
         return idx
 
-    def prev_messages(self, conversation: int) -> list[dict[str, str]]:
-        messages, augment = self.pull_messages(conversation)
+    def prev_messages(self, conversation: int, augment: Any | None = None) -> list[dict[str, str]]:
+        messages = self.pull_messages(conversation)
         if augment:
             if self.template_factory:
                 messages[-1]["content"] = self.template_factory(augment, messages)
@@ -50,7 +50,7 @@ class SQLMemory(Migrator):
         ):
             conversation = self.set_conversation(idx, username, assistant)
             self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = self.prev_messages(conversation)
+            kwargs["messages"] = self.prev_messages(conversation, augment)
             response = function(*args, **kwargs)
             content = response.choices[0].message.content
             self.commit_message("assistant", content, conversation)
@@ -71,7 +71,7 @@ class SQLMemory(Migrator):
         ):
             conversation = self.set_conversation(idx, username, assistant)
             self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = self.prev_messages(conversation)
+            kwargs["messages"] = self.prev_messages(conversation, augment)
             buffer = ""
             response = function(*args, **kwargs)
             for chunk in response:

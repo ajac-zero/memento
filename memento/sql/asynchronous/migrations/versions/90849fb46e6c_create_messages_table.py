@@ -30,7 +30,7 @@ def upgrade() -> None:
         ),
         sa.Column("role", sa.String(9), nullable=False),
         sa.Column("content", sa.Text, nullable=False),
-        sa.Column("prompt", sa.Text, nullable=False),
+        sa.Column("prompt", sa.PickleType, nullable=False),
         sa.Column("augment", sa.PickleType),
     )
 

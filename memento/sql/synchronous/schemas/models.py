@@ -1,5 +1,5 @@
 from sqlalchemy.orm import declarative_base, relationship, mapped_column as column
-from sqlalchemy import Integer, String, Text, ForeignKey
+from sqlalchemy import Integer, String, Text, ForeignKey, PickleType
 
 
 Base = declarative_base()
@@ -51,8 +51,8 @@ class Message(Base):
 
     role = column(String(9), nullable=False)
     content = column(Text, nullable=False)
-    prompt = column(Text, nullable=False)
-    augment = column(Text)
+    prompt = column(PickleType, nullable=False)
+    augment = column(PickleType)
 
     def __repr__(self) -> str:
         return f"""Message(id={self.id}, conversation={self.conversation}, role="{self.role}", content="{self.content}")"""

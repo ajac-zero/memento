@@ -25,8 +25,8 @@ class AsyncSQLMemory(Migrator):
                 idx = self.current_conversation
         return idx
 
-    async def prev_messages(self, conversation: int) -> list[dict[str, str]]:
-        messages, augment = await self.pull_messages(conversation)
+    async def prev_messages(self, conversation: int, augment: Any | None = None) -> list[dict[str, str]]:
+        messages = await self.pull_messages(conversation)
         if augment:
             if self.template_factory:
                 messages[-1]["content"] = self.template_factory(augment, messages)
@@ -50,7 +50,7 @@ class AsyncSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.prev_messages(conversation)
+            kwargs["messages"] = await self.prev_messages(conversation, augment)
             response = await function(*args, **kwargs)
             content = response.choices[0].message.content
             await self.commit_message("assistant", content, conversation)
@@ -71,7 +71,7 @@ class AsyncSQLMemory(Migrator):
         ):
             conversation = await self.set_conversation(idx, username, assistant)
             await self.commit_message("user", message, conversation, augment)
-            kwargs["messages"] = await self.prev_messages(conversation)
+            kwargs["messages"] = await self.prev_messages(conversation, augment)
             buffer = ""
             response = await function(*args, **kwargs)
             async for chunk in response:

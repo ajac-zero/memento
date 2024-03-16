@@ -53,12 +53,10 @@ class Manager(Repository):
 
     def pull_messages(
         self, conversation_idx: str
-    ) -> tuple[list[dict[str, str]], str | None]:
+    ) -> list[dict[str, str]]:
         conversation = self.read(Conversation, idx=conversation_idx)
         if conversation:
-            return [
-                message.content.model_dump() for message in conversation.messages
-            ], conversation.messages[-1].augment
+            return [message.content.model_dump() for message in conversation.messages]
         else:
             raise ValueError("Could not pull messages as conversation does not exist.")
 
@@ -81,6 +79,10 @@ class Manager(Repository):
     def get_conversation(self, **kwargs) -> str | None:
         conversation = self.read(Conversation, **kwargs)
         return conversation.idx if conversation else None
+
+    def get_messages(self, idx: str) -> list[dict] | None:
+        conversation = self.read(Conversation, idx=idx)
+        return [message.model_dump() for message in conversation.messages] if conversation else None
 
     def query(
         self,

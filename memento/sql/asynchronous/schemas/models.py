@@ -53,7 +53,7 @@ class Message(Base):
 
     role = column(String(9), nullable=False)
     content = column(Text, nullable=False)
-    prompt = column(Text, nullable=False)
+    prompt = column(PickleType, nullable=False)
     augment = column(PickleType)
 
     def __repr__(self) -> str:

@@ -1,8 +1,7 @@
 from memento.sql.synchronous.schemas.models import Assistant, Conversation, Message, User
 from memento.sql.synchronous.src.repository import Repository
 from sqlalchemy.orm import sessionmaker
-from typing import Literal
-import json
+from typing import Literal, Any
 
 
 class Manager(Repository):
@@ -47,18 +46,15 @@ class Manager(Repository):
                 content=content,
                 augment=augment,
                 conversation=conversation,
-                prompt=json.dumps(
-                    {"role": role, "content": content}
-                ),
+                prompt={"role": role, "content": content},
             )
         )
 
-    def pull_messages(self, conversation: int) -> tuple[list[dict], str | None]:
+    def pull_messages(self, conversation: int) -> list[dict]:
         conversation_instance = self.read(Conversation, id=conversation)
         if conversation_instance is not None:
-            messages = [json.loads(message.prompt) for message in conversation_instance.messages]
-            augment = conversation_instance.messages[-1].augment
-            return messages, augment
+            messages = [message.prompt for message in conversation_instance.messages]
+            return messages
         else:
             raise ValueError(
                 "Could not pull messages because conversation does not exist."

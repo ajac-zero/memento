@@ -2,7 +2,6 @@ from memento.sql.asynchronous.schemas.models import Assistant, Conversation, Mes
 from memento.sql.asynchronous.src.repository import Repository
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from typing import Any, Literal
-from json import loads, dumps
 
 
 class Manager(Repository):
@@ -47,16 +46,15 @@ class Manager(Repository):
                 content=content,
                 augment=augment,
                 conversation=conversation,
-                prompt=dumps({"role": role, "content": content}),
+                prompt={"role": role, "content": content},
             )
         )
 
-    async def pull_messages(self, conversation: int) -> tuple[list[dict], str | None]:
+    async def pull_messages(self, conversation: int) -> list[dict]:
         conversation_instance = await self.read(Conversation, id=conversation)
         if conversation_instance:
-            messages = [loads(message.prompt) for message in conversation_instance.messages]
-            augment = conversation_instance.messages[-1].augment
-            return messages, augment
+            messages = [message.prompt for message in conversation_instance.messages]
+            return messages
         else:
             raise ValueError(
                 "Could not pull messages because conversation does not exist."

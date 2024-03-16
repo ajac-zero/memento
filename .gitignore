@@ -4,3 +4,4 @@ pyrightconfig.json
 *.db
 dist/
 venv/
+.pytest_cache

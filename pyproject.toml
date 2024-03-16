@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "memento-llm"
-version = "0.1.8.5"
+version = "0.1.8.6"
 description = "Simple LLM Memory"
 authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
 packages = [{ include = "memento" }]
@@ -8,7 +8,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-makefun = "^1.15.2"
 alembic = "^1.13.1"
 sqlalchemy = { extras = ["asyncio"], version = "^2.0.28" }
 psycopg2-binary = { version = "^2.9.9", optional = true }

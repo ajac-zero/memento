@@ -1,16 +1,6 @@
-from makefun import wraps, add_signature_parameters, remove_signature_parameters
-from typing import overload, Any, Callable, Literal,  AsyncGenerator, Awaitable
 from memento.nosql.asynchronous.src.migrator import Migrator
-from inspect import signature, Parameter
-
-
-PARAMS = [
-    Parameter("message", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
-    Parameter("augment", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=Any),
-    Parameter("idx", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=str),
-    Parameter("username", kind=Parameter.POSITIONAL_OR_KEYWORD, default="username", annotation=str),
-    Parameter("assistant", kind=Parameter.POSITIONAL_OR_KEYWORD, default="assistant", annotation=str),
-]
+from typing import Any, Callable
+from functools import wraps
 
 
 class AsyncNoSQLMemory(Migrator):
@@ -48,15 +38,8 @@ class AsyncNoSQLMemory(Migrator):
                     raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
         return messages
 
-    def build_signature(self, func):
-        old_signature = signature(func)
-        new_signature = add_signature_parameters(old_signature, first=PARAMS)
-        if 'messages' in new_signature.parameters:
-            new_signature = remove_signature_parameters(new_signature, 'messages')
-        return new_signature
-
-    def decorator(self, function: Callable) -> Callable[..., Awaitable]:
-        @wraps(function, new_sig=self.build_signature(function))
+    def decorator(self, function):
+        @wraps(function)
         async def wrapper(
             message: str,
             augment: Any | None = None,
@@ -76,8 +59,8 @@ class AsyncNoSQLMemory(Migrator):
 
         return wrapper
 
-    def stream_decorator(self, function: Callable) -> Callable[..., AsyncGenerator]:
-        @wraps(function, new_sig=self.build_signature(function))
+    def stream_decorator(self, function):
+        @wraps(function)
         async def stream_wrapper(
             message: str,
             augment: Any | None = None,
@@ -103,29 +86,13 @@ class AsyncNoSQLMemory(Migrator):
 
         return stream_wrapper
 
-    @overload
-    def __call__(self, func: Callable, *, stream: Literal[False] = False, template_factory: Callable | None = None) -> Callable[..., Awaitable]:
-        ...
-
-    @overload
-    def __call__(self, func: Callable, *, stream: Literal[True], template_factory: Callable | None = None) -> Callable[..., AsyncGenerator]:
-        ...
-
-    @overload
-    def __call__(self, func: None = None, *, stream: Literal[False], template_factory: Callable | None = None) -> Callable[..., Callable[..., Awaitable]]:
-        ...
-
-    @overload
-    def __call__(self, func: None = None, *, stream: Literal[True], template_factory: Callable | None = None) -> Callable[..., Callable[..., AsyncGenerator]]:
-        ...
-
     def __call__(
         self,
         func: Callable | None = None,
         *,
         stream: bool = False,
         template_factory: Callable | None = None,
-    ) -> Callable[..., Awaitable] | Callable[..., AsyncGenerator] | Callable[..., Callable[..., Awaitable]] | Callable[..., Callable[..., AsyncGenerator]]:
+    ):
         if template_factory:
             self.template_factory = template_factory
         if func:

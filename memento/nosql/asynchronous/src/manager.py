@@ -88,9 +88,9 @@ class Manager(Repository):
         all: bool = False,
         **kwargs
     ):
-        if model is "Assistant":
+        if model == "Assistant":
             return await self.read(Assistant, all, **kwargs)
-        elif model is "Conversation":
+        elif model == "Conversation":
             return await self.read(Conversation, all, **kwargs)
         else:
             raise ValueError("Invalid model, only 'Assistant', 'Conversation', 'Message' allowed.")

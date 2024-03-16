@@ -1,18 +1,8 @@
-from makefun import wraps, add_signature_parameters, remove_signature_parameters
 from memento.sql.asynchronous.src.migrator import Migrator
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from inspect import signature, Parameter
 from typing import Callable, Any
-
-
-PARAMS = [
-    Parameter("message", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
-    Parameter("augment", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=Any),
-    Parameter("idx", kind=Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=str),
-    Parameter("username", kind=Parameter.POSITIONAL_OR_KEYWORD, default="username", annotation=str),
-    Parameter("assistant", kind=Parameter.POSITIONAL_OR_KEYWORD, default="assistant", annotation=str),
-]
+from functools import wraps
 
 
 class AsyncSQLMemory(Migrator):
@@ -47,15 +37,8 @@ class AsyncSQLMemory(Migrator):
                     raise ValueError(f"Default augmentation accepts 'str' only, but '{type(augment).__name__}' was given. Please set template_factory in decorator if another type is needed.")
         return messages
 
-    def build_signature(self, func):
-        old_signature = signature(func)
-        new_signature = add_signature_parameters(old_signature, first=PARAMS)
-        if 'messages' in new_signature.parameters:
-            new_signature = remove_signature_parameters(new_signature, 'messages')
-        return new_signature
-
     def decorator(self, function):
-        @wraps(function, new_sig=self.build_signature(function))
+        @wraps(function)
         async def wrapper(
             message: str,
             augment: Any | None = None,
@@ -76,7 +59,7 @@ class AsyncSQLMemory(Migrator):
         return wrapper
 
     def stream_decorator(self, function):
-        @wraps(function, new_sig=self.build_signature(function))
+        @wraps(function)
         async def stream_wrapper(
             message: str,
             augment: Any | None = None,

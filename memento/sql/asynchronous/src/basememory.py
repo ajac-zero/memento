@@ -1,14 +1,13 @@
-from memento.sql.asynchronous.src.migrator import Migrator
+from memento.sql.asynchronous.src.manager import Manager
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from typing import Callable, Any
 from functools import wraps
 
 
-class AsyncSQLMemory(Migrator):
+class AsyncSQLMemory(Manager):
     def __init__(self, connection: str, **kwargs):
         super().__init__(async_sessionmaker(bind=create_async_engine(connection)))
-        self.update_database(connection)
         self.current_conversation: int | None = None
         self.template_factory: Callable[..., str] | None = None
 

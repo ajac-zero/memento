@@ -1,14 +1,16 @@
-# Memento
+# Memento: _Simple LLM Memory_
 
-_Simple LLM Memory._
+Memento is a conversation management API for llm applications. It interfaces with your SQL or NoSQL database of choice to automatically handle conversational histories, assistant configurations, user preferences, and more.
 
----
+Many important AI application features are supported, such as Retrieval Augmented Generation (RAG), function/tool calling and streaming, with full async support and LLM provider agnosticism.
 
-Memento automatically manages your conversations with LLMs with just 3 lines of code. It leverages SQLAlchemy and Alembic to store conversations between users and assistants in SQLite3 or in memory.
+Memento uses SQLAlchemy and Alembic under the hood to interact with SQL databases, so any database that is supported by these libraries (PostgreSQL, MySQL, SQLite, CosmoDB, etc.) is also supported by Memento. For NoSQL databasses, Memento currently used Beanie (and Bunnet) to provide suppport for MongoDB and CosmoDB.
 
 ## Getting Started
 
-To install Memento, run `pip install memento-llm` in your terminal.
+The easiest way install Memento is by running `pip install 'memento-llm[all]'` in your terminal.
+
+## Getting Started
 
 With Memento, you no longer have to worry about setting up message storage logic in your application, here is how I can be integrated into your code:
 

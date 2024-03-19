@@ -84,6 +84,15 @@ class Manager(Repository):
         conversation = await self.read(Conversation, idx=idx)
         return [message.model_dump() for message in conversation.messages] if conversation else None
 
+    async def update_feedback(self, message_idx: str, feedback: bool) -> str:
+        message_obj = await self.read(Message, idx=message_idx)
+        if message_obj:
+            message_obj.feedback = feedback
+            message_obj.save()  # type: ignore
+            return message_obj.idx
+        else:
+            raise ValueError("Could not save message as conversation does not exist.")
+
     async def query(
         self,
         model: Literal["Assistant", "Conversation"],

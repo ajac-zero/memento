@@ -1,7 +1,7 @@
 from memento.sql.synchronous.src.migrator import Migrator
+from typing import Callable, Any, overload, Literal
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from typing import Callable, Any
 from functools import wraps
 
 
@@ -84,6 +84,15 @@ class SQLMemory(Migrator):
             self.commit_message("assistant", buffer, conversation)
 
         return stream_wrapper
+
+    @overload
+    def __call__(self, func: None = None, *, stream: Literal[False] = False, template_factory: Callable | None = None): ...
+
+    @overload
+    def __call__(self, func: Callable | None = None, *, stream: Literal[True], template_factory: Callable | None = None): ...
+
+    @overload
+    def __call__(self, func: Callable, *, stream: Literal[False] = False, template_factory: Callable | None = None): ...
 
     def __call__(self, func: Callable | None = None, *, stream: bool = False, template_factory: Callable | None = None):
         if template_factory:

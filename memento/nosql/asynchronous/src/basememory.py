@@ -1,9 +1,9 @@
-from memento.nosql.asynchronous.src.migrator import Migrator
-from typing import Any, Callable
+from memento.nosql.asynchronous.src.manager import Manager
+from typing import Any, Callable, overload, Literal
 from functools import wraps
 
 
-class AsyncNoSQLMemory(Migrator):
+class AsyncNoSQLMemory(Manager):
     def __init__(self, client) -> None:
         super().__init__(client)
         self.local_conversation: str | None = None
@@ -85,6 +85,15 @@ class AsyncNoSQLMemory(Migrator):
             await self.commit_message("assistant", buffer, conversation)
 
         return stream_wrapper
+
+    @overload
+    def __call__(self, func: None = None, *, stream: Literal[False] = False, template_factory: Callable | None = None): ...
+
+    @overload
+    def __call__(self, func: Callable | None = None, *, stream: Literal[True], template_factory: Callable | None = None): ...
+
+    @overload
+    def __call__(self, func: Callable, *, stream: Literal[False] = False, template_factory: Callable | None = None): ...
 
     def __call__(
         self,

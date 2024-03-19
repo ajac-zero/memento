@@ -32,11 +32,17 @@ class Repository:
     async def read(self, model: type[Conversation], all: Literal[True], **kwargs) -> list[Conversation] | None: ...
 
     @overload
+    async def read(self, model: type[Message], all: Literal[False] = False, **kwargs) -> Message | None: ...
+
+    @overload
+    async def read(self, model: type[Message], all: Literal[True], **kwargs) -> list[Message] | None: ...
+
+    @overload
     async def read(self, model: type[Assistant] | type[Conversation], all: bool = False, **kwargs): ...
 
     async def read(
         self,
-        model: type[Assistant] | type[Conversation],
+        model: type[Assistant] | type[Conversation] | type[Message],
         all: bool = False,
         **kwargs,
     ):

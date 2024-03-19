@@ -17,6 +17,7 @@ class Message(Document):
     idx: str = Field(default_factory=idmaker)
     augment: Optional[Any] = None
     content: MessageContent
+    feedback: Optional[bool] = None
 
 
 class Conversation(Document):

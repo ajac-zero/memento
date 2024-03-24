@@ -85,13 +85,22 @@ class Manager(Repository):
         return [message.model_dump() for message in conversation.messages] if conversation else None
 
     def update_feedback(self, message_idx: str, feedback: bool) -> str:
-        message_obj = self.read(Message, idx=message_idx)
-        if message_obj:
-            message_obj.feedback = feedback
-            message_obj.save()  # type: ignore
-            return message_obj.idx
+        message = self.read(Message, idx=message_idx)
+        if message:
+            message.feedback = feedback
+            message.save()  # type: ignore
+            return message.idx
         else:
             raise ValueError("Could not save message as conversation does not exist.")
+
+    def update_assistant_prompt(self, name: str, system_prompt: str) -> str:
+        assistant = self.read(Assistant, name=name)
+        if assistant:
+            assistant.system = system_prompt
+            assistant.save()  # type: ignore
+            return assistant.idx
+        else:
+            raise ValueError("Could not update assistant as it does not exist.")
 
     def query(
         self,

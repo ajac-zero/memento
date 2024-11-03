@@ -20,13 +20,18 @@ if __name__ == "__main__":
             )
             session.add(m1)
             session.commit()
-            print(m1.id)
 
             m2 = Message(conversation.id, role="user", content="Hello!")
             session.add(m2)
             session.commit()
-            print(m2.id)
 
-            print(m2.to_openai_format())
+            m3 = Message(
+                conversation.id,
+                role="assistant",
+                content=None,
+                tools={"tool": "exterminate", "parameters": {"target": "Joe"}},
+            )
+            session.add(m3)
+            session.commit()
 
             print(conversation.to_openai_format())

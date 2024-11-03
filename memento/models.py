@@ -21,6 +21,7 @@ class BaseMixin(MappedAsDataclass):
         default_factory=lambda: datetime.now(UTC), init=False
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(default=None, init=False)
+    archived: Mapped[bool] = mapped_column(default=False, init=False)
 
 
 class Conversation(Base, BaseMixin):

@@ -1,73 +1,22 @@
-from memento.nosql import NoSQLMemory, AsyncNoSQLMemory
-from memento.sql import SQLMemory, AsyncSQLMemory
-from typing import Any, Callable
+if __name__ == "__main__":
+    from memento.models import SQLModel, Conversation, Message
 
+    from sqlmodel import create_engine, Session
 
-class Memento(SQLMemory):
-    def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):
-        super().__init__(connection, **kwargs)
+    engine = create_engine("sqlite:///test.db")
 
-    @staticmethod
-    def nosql(connection: str) -> NoSQLMemory:
-        return NoSQLMemory.create(connection)
+    SQLModel.metadata.create_all(engine)
 
-    @classmethod
-    def patch(
-        cls,
-        connection: str,
-        nosql: bool = False,
-        stream: bool = False,
-        openai: Any | None = None,
-        function: Callable | None = None,
-        template_factory: Callable | None = None,
-    ):
-        memento = Memento.nosql(connection) if nosql else Memento(connection)
+    with Session(engine) as session:
+        conversation = Conversation(agent="Michalbot")
 
-        if openai:
-            func = openai.chat.completions.create
-            openai.chat.completions.create = memento(
-                    func, stream=stream, template_factory=template_factory
-                )
-            return openai, memento
-        elif function:
-            function = memento(
-                function, stream=stream, template_factory=template_factory
+        session.add(conversation)
+        session.commit()
+
+        if conversation.id:
+            m1 = Message(
+                conversation_id=conversation.id, content="You are a cool agent"
             )
-            return function, memento
-        else:
-            raise ValueError("Either OpenAI client or generation function required.")
-
-
-class AsyncMemento(AsyncSQLMemory):
-    def __init__(self, connection: str = "sqlite:///:memory:", **kwargs):
-        super().__init__(connection, **kwargs)
-
-    @staticmethod
-    def nosql(connection: str) -> AsyncNoSQLMemory:
-        return AsyncNoSQLMemory.create(connection)
-
-    @classmethod
-    def patch(
-        cls,
-        connection: str,
-        nosql: bool = False,
-        stream: bool = False,
-        openai: Any | None = None,
-        function: Callable | None = None,
-        template_factory: Callable | None = None,
-    ):
-        memento = AsyncMemento.nosql(connection) if nosql else AsyncMemento(connection)
-
-        if openai:
-            func = openai.chat.completions.create
-            openai.chat.completions.create = memento(
-                    func, stream=stream, template_factory=template_factory
-                )
-            return openai, memento
-        elif function:
-            function = memento(
-                function, stream=stream, template_factory=template_factory
-            )
-            return function, memento
-        else:
-            raise ValueError("Either OpenAI client or generation function required.")
+            session.add(m1)
+            session.commit()
+            print(m1.id)

@@ -2,7 +2,7 @@ import pytest
 
 from memento.models import Base, Conversation, Message
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 engine = create_engine("sqlite://")
@@ -42,7 +42,7 @@ def test_add_system_message(session):
 
 
 def test_add_user_message(session):
-    user_message = Message(2, role="user", content="Hello!")
+    user_message = Message(1, role="user", content="Hello!")
 
     session.add(user_message)
     session.commit()
@@ -56,7 +56,7 @@ def test_add_user_message(session):
 
 
 def test_add_assistant_message(session):
-    assistant_message = Message(2, role="assistant", content="Beep boop")
+    assistant_message = Message(1, role="assistant", content="Beep boop")
 
     session.add(assistant_message)
     session.commit()
@@ -67,3 +67,20 @@ def test_add_assistant_message(session):
     assert assistant_message.role == "assistant"
     assert assistant_message.tools is None
     assert assistant_message.feedback is None
+
+
+def test_conversation_message_relation(session):
+    statement = select(Conversation).where(Conversation.id == 1)
+    result = session.scalars(statement)
+    conversation = result.one()
+
+    for message in conversation.messages:
+        assert isinstance(message, Message)
+
+
+def test_message_conversation_relation(session):
+    statement = select(Message)
+    messages = session.scalars(statement)
+
+    for message in messages:
+        assert isinstance(message.conversation, Conversation)

@@ -1,25 +1,53 @@
+from typing import Optional, List
 from datetime import datetime, UTC
 
-from sqlmodel import Field, SQLModel, DateTime, JSON
+from sqlalchemy import JSON, ForeignKey
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    DeclarativeBase,
+    MappedAsDataclass,
+    relationship,
+)
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class Conversation(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), sa_type=DateTime
+class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs): ...
+
+
+class BaseMixin(MappedAsDataclass):
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    created_at: Mapped[datetime] = mapped_column(
+        default_factory=lambda: datetime.now(UTC), init=False
     )
-    updated_at: datetime | None = Field(default=None, sa_type=DateTime)
-    agent: str = Field(index=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(default=None, init=False)
 
 
-class Message(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), sa_type=DateTime
+class Conversation(Base, BaseMixin):
+    __tablename__ = "conversation"
+
+    agent: Mapped[str]
+
+    messages: Mapped[List["Message"]] = relationship(
+        back_populates="conversation", init=False
     )
-    updated_at: datetime | None = Field(default=None, sa_type=DateTime)
-    role: str = Field(default="system")
-    content: str | None = Field(default=None)
-    tools: dict | None = Field(default=None, sa_type=JSON)
-    feedback: bool | None = Field(default=None)
-    conversation_id: int = Field(foreign_key="conversation.id")
+
+    def to_openai_format(self):
+        return [message.to_openai_format() for message in self.messages]
+
+
+class Message(Base, BaseMixin):
+    __tablename__ = "message"
+
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.id"))
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="messages", init=False
+    )
+
+    role: Mapped[str] = mapped_column(default="system")
+    content: Mapped[Optional[str]] = mapped_column(default=None)
+    tools: Mapped[Optional[dict]] = mapped_column(JSON, default=None)
+    feedback: Mapped[Optional[bool]] = mapped_column(default=None)
+
+    def to_openai_format(self):
+        return {"role": self.role, "content": self.content, **(self.tools or {})}

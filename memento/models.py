@@ -36,19 +36,25 @@ class Conversation(Base, BaseMixin):
     def to_openai_format(self):
         return [message.to_openai_format() for message in self.messages]
 
+    async def to_openai_format_async(self):
+        return [
+            message.to_openai_format()
+            for message in (await self.awaitable_attrs.messages)
+        ]
+
 
 class Message(Base, BaseMixin):
     __tablename__ = "message"
 
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.id"))
-    conversation: Mapped["Conversation"] = relationship(
-        back_populates="messages", init=False
-    )
-
     role: Mapped[str] = mapped_column(default="system")
     content: Mapped[Optional[str]] = mapped_column(default=None)
     tools: Mapped[Optional[dict]] = mapped_column(JSON, default=None)
     feedback: Mapped[Optional[bool]] = mapped_column(default=None)
+
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="messages", init=False
+    )
 
     def to_openai_format(self):
         return {"role": self.role, "content": self.content, **(self.tools or {})}

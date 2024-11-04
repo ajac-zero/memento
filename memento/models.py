@@ -1,7 +1,9 @@
 from typing import Optional, List
+from uuid import UUID, uuid4
 from datetime import datetime, UTC
+import json
 
-from sqlalchemy import JSON, ForeignKey
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -17,6 +19,7 @@ class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs): ...
 
 class BaseMixin(MappedAsDataclass):
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    uuid: Mapped[UUID] = mapped_column(default_factory=uuid4, init=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         default_factory=lambda: datetime.now(UTC), init=False
     )
@@ -33,28 +36,24 @@ class Conversation(Base, BaseMixin):
         back_populates="conversation", init=False
     )
 
-    def to_openai_format(self):
-        return [message.to_openai_format() for message in self.messages]
-
-    async def to_openai_format_async(self):
-        return [
-            message.to_openai_format()
-            for message in (await self.awaitable_attrs.messages)
-        ]
-
 
 class Message(Base, BaseMixin):
     __tablename__ = "message"
 
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.id"))
-    role: Mapped[str] = mapped_column(default="system")
-    content: Mapped[Optional[str]] = mapped_column(default=None)
-    tools: Mapped[Optional[dict]] = mapped_column(JSON, default=None)
-    feedback: Mapped[Optional[bool]] = mapped_column(default=None)
+
+    role: Mapped[str]
+    content: Mapped[Optional[str]]
+    tools: Mapped[Optional[str]]
+    feedback: Mapped[Optional[bool]]
 
     conversation: Mapped["Conversation"] = relationship(
         back_populates="messages", init=False
     )
 
     def to_openai_format(self):
-        return {"role": self.role, "content": self.content, **(self.tools or {})}
+        return {
+            "role": self.role,
+            "content": self.content,
+            **json.loads(self.tools or "{}"),
+        }

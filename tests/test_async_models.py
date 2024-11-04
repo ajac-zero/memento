@@ -1,27 +1,34 @@
 from uuid import UUID
 
 import pytest
-from sqlalchemy import select, create_engine
-from sqlalchemy.orm import Session
+import pytest_asyncio
+from sqlalchemy import select
 from memento.models import Conversation, Message, Base
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+engine = create_async_engine("sqlite+aiosqlite://")
+
+sm = async_sessionmaker(engine, expire_on_commit=False)
 
 
-engine = create_engine("sqlite://")
-
-Base.metadata.create_all(engine)
-
-
-@pytest.fixture
-def session():
-    with Session(engine) as s:
+@pytest_asyncio.fixture
+async def async_session():
+    async with sm() as s:
         yield s
 
 
-def test_create_conversation(session):
+@pytest.mark.asyncio
+async def test_setup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest.mark.asyncio
+async def test_create_conversation(async_session):
     conversation = Conversation(agent="Michalbot")
 
-    session.add(conversation)
-    session.commit()
+    async_session.add(conversation)
+    await async_session.commit()
 
     assert isinstance(conversation.id, int)
     assert conversation.id == 1
@@ -29,13 +36,14 @@ def test_create_conversation(session):
     assert isinstance(conversation.uuid, UUID)
 
 
-def test_add_system_message(session):
+@pytest.mark.asyncio
+async def test_add_system_message(async_session):
     system_message = Message(
         1, role="system", content="You are an awesome robot", tools=None, feedback=None
     )
 
-    session.add(system_message)
-    session.commit()
+    async_session.add(system_message)
+    await async_session.commit()
 
     assert isinstance(system_message.id, int)
     assert system_message.id == 1
@@ -46,11 +54,12 @@ def test_add_system_message(session):
     assert isinstance(system_message.uuid, UUID)
 
 
-def test_add_user_message(session):
+@pytest.mark.asyncio
+async def test_add_user_message(async_session):
     user_message = Message(1, role="user", content="Hello!", tools=None, feedback=None)
 
-    session.add(user_message)
-    session.commit()
+    async_session.add(user_message)
+    await async_session.commit()
 
     assert isinstance(user_message.id, int)
     assert user_message.id == 2
@@ -61,13 +70,14 @@ def test_add_user_message(session):
     assert isinstance(user_message.uuid, UUID)
 
 
-def test_add_assistant_message(session):
+@pytest.mark.asyncio
+async def test_add_assistant_message(async_session):
     assistant_message = Message(
         1, role="assistant", content="Beep boop", tools=None, feedback=None
     )
 
-    session.add(assistant_message)
-    session.commit()
+    async_session.add(assistant_message)
+    await async_session.commit()
 
     assert isinstance(assistant_message.id, int)
     assert assistant_message.id == 3
@@ -78,13 +88,14 @@ def test_add_assistant_message(session):
     assert isinstance(assistant_message.uuid, UUID)
 
 
-def test_add_assistant_message_with_tool(session):
+@pytest.mark.asyncio
+async def test_add_assistant_message_with_tool(async_session):
     assistant_message = Message(
         1, role="assistant", content=None, tools='{"tool_id": "1234"}', feedback=None
     )
 
-    session.add(assistant_message)
-    session.commit()
+    async_session.add(assistant_message)
+    await async_session.commit()
 
     assert isinstance(assistant_message.id, int)
     assert assistant_message.id == 4
@@ -95,22 +106,25 @@ def test_add_assistant_message_with_tool(session):
     assert isinstance(assistant_message.uuid, UUID)
 
 
-def test_conversation_message_relation(session):
+@pytest.mark.asyncio
+async def test_conversation_message_relation(async_session):
     statement = select(Conversation).where(Conversation.id == 1)
-    result = session.scalars(statement)
+    result = await async_session.scalars(statement)
     conversation = result.one()
 
     assert isinstance(conversation.uuid, UUID)
 
-    for message in conversation.messages:
+    for message in await conversation.awaitable_attrs.messages:
         assert isinstance(message, Message)
         assert isinstance(message.uuid, UUID)
 
 
-def test_message_conversation_relation(session):
+@pytest.mark.asyncio
+async def test_message_conversation_relation(async_session):
     statement = select(Message)
-    messages = session.scalars(statement)
+    messages = await async_session.scalars(statement)
 
     for message in messages:
-        assert isinstance(message.conversation, Conversation)
-        assert isinstance(message.conversation.uuid, UUID)
+        c = await message.awaitable_attrs.conversation
+        assert isinstance(c, Conversation)
+        assert isinstance(c.uuid, UUID)

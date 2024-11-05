@@ -55,3 +55,16 @@ class Recoder:
 
     def to_openai_format(self):
         return [message.to_openai_format() for message in self.messages]
+
+    def add_openai_response(self, response):
+        message = response.choices[0].message
+
+        message = models.Message(
+            self.conversation.id,
+            role=message.role,
+            content=message.content,
+            tools=json.dumps(tools) if (tools := message.tools) else None,
+            feedback=None,
+        )
+        self.messages.append(message)
+        self.new_messages.append(message)

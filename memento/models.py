@@ -1,20 +1,21 @@
-from typing import Optional, List
-from uuid import UUID, uuid4
-from datetime import datetime, UTC
 import json
+from datetime import UTC, datetime
+from typing import List, Optional
+from uuid import UUID, uuid4
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
-    Mapped,
-    mapped_column,
     DeclarativeBase,
+    Mapped,
     MappedAsDataclass,
+    mapped_column,
     relationship,
 )
-from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs): ...
+class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs):
+    ...
 
 
 class BaseMixin(MappedAsDataclass):

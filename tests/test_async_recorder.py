@@ -1,7 +1,8 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from memento import models, crud, recorder
+
+from memento import crud, models, recorder
 
 engine = create_async_engine("sqlite+aiosqlite://")
 

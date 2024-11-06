@@ -29,7 +29,7 @@ class BaseMixin(MappedAsDataclass):
 
 
 class Conversation(Base, BaseMixin):
-    __tablename__ = "conversation"
+    __tablename__ = "memento_conversation"
 
     agent: Mapped[str]
 
@@ -39,18 +39,23 @@ class Conversation(Base, BaseMixin):
 
 
 class Message(Base, BaseMixin):
-    __tablename__ = "message"
+    __tablename__ = "memento_message"
 
-    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.id"))
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("memento_conversation.id"))
 
     role: Mapped[str]
     content: Mapped[Optional[str]]
     tools: Mapped[Optional[str]]
     feedback: Mapped[Optional[bool]]
 
+    origin_message_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("memento_message.id"), default=None
+    )
+
     conversation: Mapped["Conversation"] = relationship(
         back_populates="messages", init=False
     )
+    origin_message: Mapped["Message"] = relationship(init=False)
 
     def to_openai_format(self):
         return {

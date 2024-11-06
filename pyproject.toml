@@ -6,6 +6,9 @@ authors = ["Anibal Angulo <ajcardoza2000@gmail.com>"]
 packages = [{ include = "memento" }]
 readme = "README.md"
 
+[tool.poetry.scripts]
+memento = "memento.cli:cli"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 sqlalchemy = { extras = ["asyncio"], version = "^2.0.36" }

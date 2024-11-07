@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -21,9 +21,11 @@ class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs):
 class BaseMixin(MappedAsDataclass):
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     created_at: Mapped[datetime] = mapped_column(
-        default_factory=lambda: datetime.now(UTC), init=False
+        DateTime(timezone=True), default_factory=lambda: datetime.now(UTC), init=False
     )
-    updated_at: Mapped[Optional[datetime]] = mapped_column(default=None, init=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=None, init=False
+    )
     archived: Mapped[bool] = mapped_column(default=False, init=False)
 
 
@@ -34,7 +36,7 @@ class Conversation(Base, BaseMixin):
     uuid: Mapped[UUID] = mapped_column(default_factory=uuid4, init=False, index=True)
 
     messages: Mapped[List["Message"]] = relationship(
-        back_populates="conversation", init=False
+        back_populates="conversation", init=False, cascade="delete"
     )
 
 

@@ -57,7 +57,7 @@ class Recoder:
         session.add_all(self.new_messages)
         await session.commit()
 
-        return [message.id for message in self.new_messages]
+        return [(await message.awaitable_attrs.id) for message in self.new_messages]
 
     def to_openai_format(self):
         return [message.to_openai_format() for message in self.messages]

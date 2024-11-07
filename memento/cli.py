@@ -3,10 +3,11 @@ import os
 import click
 from rich import print as rprint
 from rich.prompt import Prompt
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
+
+from memento.models import Base
 
 ENV_VAR = "MEMENTO_DB_CONNECTION_STRING"
-MIGRATIONS_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/migrations"
 
 
 @click.command()
@@ -31,9 +32,8 @@ def cli(action, echo):
 
     engine = create_engine(db_url, echo=echo)
 
-    with open(f"{MIGRATIONS_DIR}/{action}.sql", "r") as file:
-        queries = [query for query in file.read().split("\n\n")]
-
-    with engine.connect() as conn:
-        for query in queries:
-            conn.execute(text(query))
+    match action:
+        case "upgrade":
+            Base.metadata.create_all(engine)
+        case "downgrade":
+            Base.metadata.drop_all(engine)

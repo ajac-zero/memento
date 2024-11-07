@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import create_engine, select
@@ -43,11 +43,13 @@ def test_add_system_message(session):
     assert system_message.role == "system"
     assert system_message.tools is None
     assert system_message.feedback is None
-    assert isinstance(system_message.uuid, UUID)
+    assert system_message.uuid is None
 
 
 def test_add_user_message(session):
-    user_message = Message(1, role="user", content="Hello!", tools=None, feedback=None)
+    user_message = Message(
+        1, role="user", content="Hello!", tools=None, feedback=None, uuid=uuid4()
+    )
 
     session.add(user_message)
     session.commit()
@@ -63,7 +65,12 @@ def test_add_user_message(session):
 
 def test_add_assistant_message(session):
     assistant_message = Message(
-        1, role="assistant", content="Beep boop", tools=None, feedback=None
+        1,
+        role="assistant",
+        content="Beep boop",
+        tools=None,
+        feedback=None,
+        uuid=uuid4(),
     )
 
     session.add(assistant_message)
@@ -80,7 +87,12 @@ def test_add_assistant_message(session):
 
 def test_add_assistant_message_with_tool(session):
     assistant_message = Message(
-        1, role="assistant", content=None, tools='{"tool_id": "1234"}', feedback=None
+        1,
+        role="assistant",
+        content=None,
+        tools='{"tool_id": "1234"}',
+        feedback=None,
+        uuid=uuid4(),
     )
 
     session.add(assistant_message)
@@ -104,7 +116,6 @@ def test_conversation_message_relation(session):
 
     for message in conversation.messages:
         assert isinstance(message, Message)
-        assert isinstance(message.uuid, UUID)
 
 
 def test_message_conversation_relation(session):

@@ -20,7 +20,6 @@ class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs):
 
 class BaseMixin(MappedAsDataclass):
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    uuid: Mapped[UUID] = mapped_column(default_factory=uuid4, init=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         default_factory=lambda: datetime.now(UTC), init=False
     )
@@ -32,6 +31,7 @@ class Conversation(Base, BaseMixin):
     __tablename__ = "memento_conversation"
 
     agent: Mapped[str]
+    uuid: Mapped[UUID] = mapped_column(default_factory=uuid4, init=False, index=True)
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="conversation", init=False
@@ -48,6 +48,7 @@ class Message(Base, BaseMixin):
     tools: Mapped[Optional[str]]
     feedback: Mapped[Optional[bool]]
 
+    uuid: Mapped[Optional[UUID]] = mapped_column(default=None, index=True)
     origin_message_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("memento_message.id"), default=None
     )

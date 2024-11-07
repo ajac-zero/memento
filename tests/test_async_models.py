@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
@@ -52,12 +52,14 @@ async def test_add_system_message(async_session):
     assert system_message.role == "system"
     assert system_message.tools is None
     assert system_message.feedback is None
-    assert isinstance(system_message.uuid, UUID)
+    assert system_message.uuid is None
 
 
 @pytest.mark.asyncio
 async def test_add_user_message(async_session):
-    user_message = Message(1, role="user", content="Hello!", tools=None, feedback=None)
+    user_message = Message(
+        1, role="user", content="Hello!", tools=None, feedback=None, uuid=uuid4()
+    )
 
     async_session.add(user_message)
     await async_session.commit()
@@ -74,7 +76,12 @@ async def test_add_user_message(async_session):
 @pytest.mark.asyncio
 async def test_add_assistant_message(async_session):
     assistant_message = Message(
-        1, role="assistant", content="Beep boop", tools=None, feedback=None
+        1,
+        role="assistant",
+        content="Beep boop",
+        tools=None,
+        feedback=None,
+        uuid=uuid4(),
     )
 
     async_session.add(assistant_message)
@@ -92,7 +99,12 @@ async def test_add_assistant_message(async_session):
 @pytest.mark.asyncio
 async def test_add_assistant_message_with_tool(async_session):
     assistant_message = Message(
-        1, role="assistant", content=None, tools='{"tool_id": "1234"}', feedback=None
+        1,
+        role="assistant",
+        content=None,
+        tools='{"tool_id": "1234"}',
+        feedback=None,
+        uuid=uuid4(),
     )
 
     async_session.add(assistant_message)
@@ -117,7 +129,6 @@ async def test_conversation_message_relation(async_session):
 
     for message in await conversation.awaitable_attrs.messages:
         assert isinstance(message, Message)
-        assert isinstance(message.uuid, UUID)
 
 
 @pytest.mark.asyncio

@@ -30,7 +30,11 @@ class Recoder:
         return cls(conversation, messages)
 
     def add_message(
-        self, role: str, content: str | None = None, tools: dict | None = None
+        self,
+        role: str,
+        content: str | None = None,
+        tools: dict | None = None,
+        uuid: UUID | None = None,
     ):
         message = models.Message(
             self.conversation.id,
@@ -38,6 +42,7 @@ class Recoder:
             content=content,
             tools=json.dumps(tools) if tools else None,
             feedback=None,
+            uuid=uuid,
         )
         self.messages.append(message)
         self.new_messages.append(message)

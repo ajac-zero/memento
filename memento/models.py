@@ -36,7 +36,7 @@ class Conversation(Base, BaseMixin):
     uuid: Mapped[UUID] = mapped_column(default_factory=uuid4, init=False, index=True)
 
     messages: Mapped[List["Message"]] = relationship(
-        back_populates="conversation", init=False, cascade="delete"
+        back_populates="conversation", init=False, cascade="delete", lazy="selectin"
     )
 
 
@@ -56,7 +56,7 @@ class Message(Base, BaseMixin):
     )
 
     conversation: Mapped["Conversation"] = relationship(
-        back_populates="messages", init=False
+        back_populates="messages", init=False, lazy="joined"
     )
     origin_message: Mapped["Message"] = relationship(init=False)
 

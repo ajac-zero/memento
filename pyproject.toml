@@ -23,7 +23,6 @@ openai = "^1.13.3"
 mkdocs = "^1.5.3"
 aiosqlite = "^0.20.0"
 psycopg2-binary = "^2.9.10"
-alembic = "^1.14.0"
 
 [tool.ruff.lint]
 select = ["I"]

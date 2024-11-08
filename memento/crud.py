@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from memento.models import Conversation, Message
 
@@ -52,15 +52,23 @@ async def create_conversation_async(session: AsyncSession, agent: str):
     conversation = Conversation(agent)
     session.add(conversation)
     await session.commit()
-    await session.refresh(conversation)
+    await session.refresh(conversation, ["messages"])
     return conversation
 
 
 async def get_conversation_async(session: AsyncSession, id: int | UUID):
     if isinstance(id, int):
-        statement = select(Conversation).where(Conversation.id == id)
+        statement = (
+            select(Conversation)
+            .where(Conversation.id == id)
+            .options(selectinload(Conversation.messages))
+        )
     elif isinstance(id, UUID):
-        statement = select(Conversation).where(Conversation.uuid == id)
+        statement = (
+            select(Conversation)
+            .where(Conversation.uuid == id)
+            .options(selectinload(Conversation.messages))
+        )
     result = await session.scalars(statement)
     return result.one()
 
@@ -68,7 +76,7 @@ async def get_conversation_async(session: AsyncSession, id: int | UUID):
 async def soft_delete_conversation_async(session: AsyncSession, id: int | UUID):
     conversation = await get_conversation_async(session, id)
     conversation.archived = True
-    for message in await conversation.awaitable_attrs.messages:
+    for message in conversation.messages:
         message.archived = True
     await session.commit()
     return conversation
@@ -144,15 +152,23 @@ async def create_message_async(
     message = Message(conversation_id, role, content, json.dumps(tools), None)
     session.add(message)
     await session.commit()
-    await session.refresh(message)
+    await session.refresh(message, ["conversation", "origin_message"])
     return message
 
 
 async def get_message_async(session: AsyncSession, id: int | UUID):
     if isinstance(id, int):
-        statement = select(Message).where(Message.id == id)
+        statement = (
+            select(Message)
+            .where(Message.id == id)
+            .options(selectinload(Message.conversation, Message.origin_message))
+        )
     elif isinstance(id, UUID):
-        statement = select(Message).where(Message.uuid == id)
+        statement = (
+            select(Message)
+            .where(Message.uuid == id)
+            .options(selectinload(Message.conversation, Message.origin_message))
+        )
     result = await session.scalars(statement)
     return result.one()
 

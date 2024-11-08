@@ -38,8 +38,7 @@ class Conversation(Base, BaseMixin):
     messages: Mapped[List["Message"]] = relationship(
         back_populates="conversation",
         init=False,
-        cascade="save-update, delete",
-        lazy="selectin",
+        cascade="save-update, delete, delete-orphan",
     )
 
 
@@ -59,9 +58,9 @@ class Message(Base, BaseMixin):
     )
 
     conversation: Mapped["Conversation"] = relationship(
-        back_populates="messages", init=False, lazy="joined"
+        back_populates="messages", init=False
     )
-    origin_message: Mapped["Message"] = relationship(init=False, lazy="joined")
+    origin_message: Mapped["Message"] = relationship(init=False)
 
     def to_openai_format(self):
         return {

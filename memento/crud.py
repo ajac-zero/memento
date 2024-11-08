@@ -101,7 +101,9 @@ def create_message(
     content: str | None = None,
     tools: dict | None = None,
 ):
-    message = Message(conversation_id, role, content, json.dumps(tools), None)
+    message = Message(
+        conversation_id, role, content, json.dumps(tools) if tools else None, None
+    )
     session.add(message)
     session.commit()
     session.refresh(message)
@@ -149,7 +151,9 @@ async def create_message_async(
     content: str | None = None,
     tools: dict | None = None,
 ):
-    message = Message(conversation_id, role, content, json.dumps(tools), None)
+    message = Message(
+        conversation_id, role, content, json.dumps(tools) if tools else None, None
+    )
     session.add(message)
     await session.commit()
     await session.refresh(message, ["conversation", "origin_message"])

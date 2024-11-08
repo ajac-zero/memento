@@ -14,7 +14,8 @@ from sqlalchemy.orm import (
 )
 
 
-class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs): ...
+class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs):
+    ...
 
 
 class BaseMixin(MappedAsDataclass):

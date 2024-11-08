@@ -8,26 +8,20 @@ from memento import crud, models
 
 
 class Recoder:
-    def __init__(
-        self, conversation: models.Conversation, messages: list[models.Message]
-    ) -> None:
+    def __init__(self, conversation: models.Conversation) -> None:
         self.conversation = conversation
-        self.messages = messages
-        self.new_messages: list[models.Message] = []
 
     @classmethod
     def from_conversation(cls, session: Session, id: int | UUID) -> "Recoder":
         conversation = crud.get_conversation(session, id)
-        messages = conversation.messages
-        return cls(conversation, messages)
+        return cls(conversation)
 
     @classmethod
     async def from_conversation_async(
         cls, session: AsyncSession, id: int | UUID
     ) -> "Recoder":
         conversation = await crud.get_conversation_async(session, id)
-        messages = await conversation.awaitable_attrs.messages
-        return cls(conversation, messages)
+        return cls(conversation)
 
     def add_message(
         self,
@@ -35,7 +29,7 @@ class Recoder:
         content: str | None = None,
         tools: dict | None = None,
         uuid: UUID | None = None,
-    ):
+    ) -> None:
         message = models.Message(
             self.conversation.id,
             role=role,
@@ -44,33 +38,30 @@ class Recoder:
             feedback=None,
             uuid=uuid,
         )
-        self.messages.append(message)
-        self.new_messages.append(message)
+        self.conversation.messages.append(message)
 
-    def commit_new_messages(self, session: Session):
-        session.add_all(self.new_messages)
+    def commit_new_messages(self, session: Session) -> list[int]:
         session.commit()
 
-        return [message.id for message in self.new_messages]
+        session.refresh(self.conversation)
 
-    async def commit_new_messages_async(self, session: AsyncSession):
-        session.add_all(self.new_messages)
+        return [message.id for message in self.conversation.messages]
+
+    async def commit_new_messages_async(self, session: AsyncSession) -> list[int]:
         await session.commit()
 
-        return [(await message.awaitable_attrs.id) for message in self.new_messages]
+        await session.refresh(self.conversation, ["messages"])
 
-    def to_openai_format(self):
-        return [message.to_openai_format() for message in self.messages]
+        return [message.id for message in self.conversation.messages]
 
-    def add_openai_response(self, response):
+    def to_openai_format(self) -> list[dict]:
+        return [message.to_openai_format() for message in self.conversation.messages]
+
+    def add_openai_response(self, response) -> None:
         message = response.choices[0].message
 
-        message = models.Message(
-            self.conversation.id,
+        self.add_message(
             role=message.role,
             content=message.content,
-            tools=json.dumps(tools) if (tools := message.tools) else None,
-            feedback=None,
+            tools=tools if (tools := message.tools) else None,
         )
-        self.messages.append(message)
-        self.new_messages.append(message)

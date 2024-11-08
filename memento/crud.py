@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 from sqlalchemy import select
@@ -85,6 +86,20 @@ async def hard_delete_conversation_async(session: AsyncSession, id: int | UUID):
 ## Sync
 
 
+def create_message(
+    session: Session,
+    conversation_id: int,
+    role: str,
+    content: str | None = None,
+    tools: dict | None = None,
+):
+    message = Message(conversation_id, role, content, json.dumps(tools), None)
+    session.add(message)
+    session.commit()
+    session.refresh(message)
+    return message
+
+
 def get_message(session: Session, id: int | UUID):
     if isinstance(id, int):
         statement = select(Message).where(Message.id == id)
@@ -117,6 +132,20 @@ def hard_delete_message(session: Session, id: int | UUID):
 
 
 ## Async
+
+
+async def create_message_async(
+    session: AsyncSession,
+    conversation_id: int,
+    role: str,
+    content: str | None = None,
+    tools: dict | None = None,
+):
+    message = Message(conversation_id, role, content, json.dumps(tools), None)
+    session.add(message)
+    await session.commit()
+    await session.refresh(message)
+    return message
 
 
 async def get_message_async(session: AsyncSession, id: int | UUID):

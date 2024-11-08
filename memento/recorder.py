@@ -13,7 +13,7 @@ class Recoder:
     ) -> None:
         self.conversation = conversation
         self.messages = messages
-        self.new_messages = []
+        self.new_messages: list[models.Message] = []
 
     @classmethod
     def from_conversation(cls, session: Session, id: int | UUID) -> "Recoder":

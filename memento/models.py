@@ -14,8 +14,7 @@ from sqlalchemy.orm import (
 )
 
 
-class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs):
-    ...
+class Base(DeclarativeBase, MappedAsDataclass, AsyncAttrs): ...
 
 
 class BaseMixin(MappedAsDataclass):
@@ -60,7 +59,9 @@ class Message(Base, BaseMixin):
     conversation: Mapped["Conversation"] = relationship(
         back_populates="messages", init=False
     )
-    origin_message: Mapped["Message"] = relationship(init=False)
+    origin_message: Mapped["Message"] = relationship(
+        init=False, lazy="joined", join_depth=1
+    )
 
     def to_openai_format(self):
         return {

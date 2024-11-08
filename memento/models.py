@@ -58,7 +58,7 @@ class Message(Base, BaseMixin):
     conversation: Mapped["Conversation"] = relationship(
         back_populates="messages", init=False, lazy="joined"
     )
-    origin_message: Mapped["Message"] = relationship(init=False)
+    origin_message: Mapped["Message"] = relationship(init=False, lazy="joined")
 
     def to_openai_format(self):
         return {

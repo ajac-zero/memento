@@ -5,3 +5,4 @@ pyrightconfig.json
 dist/
 venv/
 .pytest_cache
+misc/

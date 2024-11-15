@@ -39,6 +39,7 @@ class Conversation(Base, BaseMixin):
         back_populates="conversation",
         init=False,
         cascade="save-update, delete, delete-orphan",
+        order_by="Message.id",
     )
 
 

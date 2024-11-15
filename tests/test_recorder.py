@@ -24,17 +24,15 @@ def test_create_conversation(session):
 
 @pytest.fixture
 def re(session):
-    return recorder.Recoder.from_conversation(session, 1)
+    return recorder.Recorder.from_conversation(session, 1)
 
 
 def test_add_message(re):
-    x = len(re.messages)
-    y = len(re.new_messages)
+    x = len(re.conversation.messages)
 
     re.add_message(role="system", content="hello!")
 
-    assert len(re.messages) == (x + 1)
-    assert len(re.new_messages) == (y + 1)
+    assert len(re.conversation.messages) == (x + 1)
 
 
 def test_commit_messages(session, re):

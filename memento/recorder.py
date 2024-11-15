@@ -7,19 +7,19 @@ from sqlalchemy.orm import Session
 from memento import crud, models
 
 
-class Recoder:
+class Recorder:
     def __init__(self, conversation: models.Conversation) -> None:
         self.conversation = conversation
 
     @classmethod
-    def from_conversation(cls, session: Session, id: int | UUID) -> "Recoder":
+    def from_conversation(cls, session: Session, id: int | UUID) -> "Recorder":
         conversation = crud.get_conversation(session, id)
         return cls(conversation)
 
     @classmethod
     async def from_conversation_async(
         cls, session: AsyncSession, id: int | UUID
-    ) -> "Recoder":
+    ) -> "Recorder":
         conversation = await crud.get_conversation_async(session, id)
         return cls(conversation)
 

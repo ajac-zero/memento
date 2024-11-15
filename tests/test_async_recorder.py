@@ -31,18 +31,16 @@ async def test_create_conversation(async_session):
 
 @pytest_asyncio.fixture
 async def re(async_session):
-    return await recorder.Recoder.from_conversation_async(async_session, 1)
+    return await recorder.Recorder.from_conversation_async(async_session, 1)
 
 
 @pytest.mark.asyncio
 async def test_add_message(re):
-    x = len(re.messages)
-    y = len(re.new_messages)
+    x = len(re.conversation.messages)
 
     re.add_message(role="system", content="hello!")
 
-    assert len(re.messages) == (x + 1)
-    assert len(re.new_messages) == (y + 1)
+    assert len(re.conversation.messages) == (x + 1)
 
 
 @pytest.mark.asyncio

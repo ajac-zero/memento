@@ -31,7 +31,7 @@ async def test_create_conversation(async_session):
 
 @pytest_asyncio.fixture
 async def re(async_session):
-    return await recorder.Recorder.from_conversation_async(async_session, 1)
+    return await recorder.AsyncRecorder.from_conversation(async_session, 1)
 
 
 @pytest.mark.asyncio
@@ -47,7 +47,7 @@ async def test_add_message(re):
 async def test_commit_messages(async_session, re):
     re.add_message(role="system", content="You're an awesome robot")
     re.add_message(role="user", content="hello!")
-    message_ids = await re.commit_new_messages_async(async_session)
+    message_ids = await re.save(async_session)
 
     for n, id in enumerate(message_ids, start=1):
         assert id == n

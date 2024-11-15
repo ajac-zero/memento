@@ -7,21 +7,9 @@ from sqlalchemy.orm import Session
 from memento import crud, models
 
 
-class Recorder:
+class BaseRecorder:
     def __init__(self, conversation: models.Conversation) -> None:
         self.conversation = conversation
-
-    @classmethod
-    def from_conversation(cls, session: Session, id: int | UUID) -> "Recorder":
-        conversation = crud.get_conversation(session, id)
-        return cls(conversation)
-
-    @classmethod
-    async def from_conversation_async(
-        cls, session: AsyncSession, id: int | UUID
-    ) -> "Recorder":
-        conversation = await crud.get_conversation_async(session, id)
-        return cls(conversation)
 
     def add_message(
         self,
@@ -40,20 +28,6 @@ class Recorder:
         )
         self.conversation.messages.append(message)
 
-    def commit_new_messages(self, session: Session) -> list[int]:
-        session.commit()
-
-        session.refresh(self.conversation)
-
-        return [message.id for message in self.conversation.messages]
-
-    async def commit_new_messages_async(self, session: AsyncSession) -> list[int]:
-        await session.commit()
-
-        await session.refresh(self.conversation, ["messages"])
-
-        return [message.id for message in self.conversation.messages]
-
     def to_openai_format(self) -> list[dict]:
         return [message.to_openai_format() for message in self.conversation.messages]
 
@@ -65,3 +39,39 @@ class Recorder:
             content=message.content,
             tools=tools if (tools := message.tools) else None,
         )
+
+
+class Recorder(BaseRecorder):
+    def __init__(self, conversation: models.Conversation) -> None:
+        super().__init__(conversation)
+
+    @classmethod
+    def from_conversation(cls, session: Session, id: int | UUID) -> "Recorder":
+        conversation = crud.get_conversation(session, id)
+        return cls(conversation)
+
+    def save(self, session: Session) -> list[int]:
+        session.commit()
+
+        session.refresh(self.conversation)
+
+        return [message.id for message in self.conversation.messages]
+
+
+class AsyncRecorder(BaseRecorder):
+    def __init__(self, conversation: models.Conversation) -> None:
+        super().__init__(conversation)
+
+    @classmethod
+    async def from_conversation(
+        cls, session: AsyncSession, id: int | UUID
+    ) -> "AsyncRecorder":
+        conversation = await crud.get_conversation_async(session, id)
+        return cls(conversation)
+
+    async def save(self, session: AsyncSession) -> list[int]:
+        await session.commit()
+
+        await session.refresh(self.conversation, ["messages"])
+
+        return [message.id for message in self.conversation.messages]

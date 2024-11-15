@@ -38,7 +38,7 @@ def test_add_message(re):
 def test_commit_messages(session, re):
     re.add_message(role="system", content="You're an awesome robot")
     re.add_message(role="user", content="hello!")
-    message_ids = re.commit_new_messages(session)
+    message_ids = re.save(session)
 
     for n, id in enumerate(message_ids, start=1):
         assert id == n

@@ -47,7 +47,6 @@ class Message(Base, BaseMixin):
     __tablename__ = "memento_message"
 
     conversation_id: Mapped[int] = mapped_column(ForeignKey("memento_conversation.id"))
-
     role: Mapped[str]
     content: Mapped[Optional[str]]
     tools: Mapped[Optional[str]]
